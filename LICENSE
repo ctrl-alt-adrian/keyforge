@@ -1,21 +1,92 @@
-MIT License
-
+Keyforge Source-Available License, Version 1.0
 Copyright (c) 2026 Adrian Thomas
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Scope
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This license applies to the portions of Keyforge in which Adrian Thomas
+holds copyright and which are distributed under this license (the
+"Software"). A "Modified Version" is the Software with changes, or a work
+that incorporates the Software or a copyrightable portion of it and for
+which permission under copyright law is required.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Third-party components retain their own licenses. This license does not
+replace those licenses or limit rights granted independently under them.
+
+2. Permission
+
+Subject to the conditions below, the copyright holder grants you a
+worldwide, royalty-free, nonexclusive copyright license to use, copy,
+modify, compile and distribute the Software and Modified Versions, in
+source or executable form, for any personal, educational, professional,
+internal business or other commercial or noncommercial purpose.
+
+You may make private modifications and distribute free copies of original
+or modified versions. You are not required to publish your modifications.
+
+3. No paid distribution
+
+Without separate prior written permission from the copyright holder, you
+may not:
+
+(a) sell, license for a fee, rent, or otherwise distribute the Software or
+    a Modified Version in exchange for payment or other consideration;
+(b) charge for access to a copy or download of the Software or a Modified
+    Version, including through a required subscription, membership,
+    donation, or purchase; or
+(c) supply a copy of the Software or a Modified Version as part of a
+    paid product or service bundle, even when no separate price is
+    assigned to that copy.
+
+This restriction does not prohibit using the Software for paid work,
+selling independently created products or services, or charging for
+independent support, training, installation or customization services,
+provided that access to the Software or Modified Version itself is not
+conditioned on payment and any copies distributed under this license are
+available separately without charge. Voluntary donations that confer no
+paid access or software entitlement are permitted. General-purpose
+internet, hosting, or storage fees not charged for access to the Software
+itself are not prohibited.
+
+4. Redistribution conditions
+
+When distributing the Software or a Modified Version, you must include
+this complete license and retain applicable copyright and attribution
+notices. Clearly identify any Modified Version as modified and do not
+represent it as an official release of Keyforge.
+
+Recipients receive the permissions granted by this license directly
+from the copyright holder. You may not remove or weaken these conditions
+for portions of the Software covered by this license. You may license
+your own independent contributions separately, subject to the conditions
+applicable to the Software.
+
+5. User files and output
+
+This license imposes no restrictions on independently created keyboard
+configurations, keymaps, firmware or other output produced using the
+Software merely because the Software was used to create them. Any
+copyrighted material incorporated into such output remains subject to
+its applicable license.
+
+6. Reserved rights and termination
+
+All rights not expressly granted are reserved. This license does not
+grant permission to use the copyright holder's trademarks or branding
+in a manner that suggests endorsement or affiliation.
+
+Your permissions under this license terminate if you violate its
+conditions. Termination does not affect the rights of recipients who
+continue to comply with this license. This license does not revoke
+permissions previously granted under a different license for earlier
+versions or portions of the Software.
+
+7. Disclaimer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE, TO THE EXTENT
+PERMITTED BY APPLICABLE LAW.
