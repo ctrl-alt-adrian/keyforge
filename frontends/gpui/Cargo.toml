@@ -1,0 +1,21 @@
+[package]
+name = "keyforge-gpui"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.95"
+
+[features]
+gallery = []
+
+[workspace]
+
+[dependencies]
+keyforge-core = { path = "../../core" }
+gpui = "=0.2.2"
+gpui-component = "=0.5.1"
+gpui-component-assets = "=0.5.1"
+
+# xattr 0.2.3 uses a libc alias removed on Linux. See vendor/xattr/KEYFORGE.md.
+[patch.crates-io]
+xattr = { path = "../../vendor/xattr" }

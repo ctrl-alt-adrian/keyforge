@@ -1,0 +1,3 @@
+[alias]
+app = "run --locked --manifest-path frontends/gpui/Cargo.toml"
+gallery = "run --locked --manifest-path frontends/gpui/Cargo.toml --features gallery -- --gallery"
