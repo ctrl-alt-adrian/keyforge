@@ -2,6 +2,8 @@
 
 A desktop editor for [ZMK](https://zmk.dev/) keymaps, with local firmware builds.
 
+<img width="1411" height="991" alt="image" src="https://github.com/user-attachments/assets/93f86c3c-94f1-4ffb-b126-c01b82867f74" />
+
 ## Features
 
 ### Editing
