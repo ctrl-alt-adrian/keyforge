@@ -94,6 +94,14 @@ Keyforge was inspired by [Keymap Editor](https://github.com/nickcoutsos/keymap-e
 
 ## License
 
-[MIT License](LICENSE). Copyright (c) 2026 Adrian Thomas.
+Keyforge is free for personal, professional and commercial use under the
+[Keyforge Source-Available License 1.0](LICENSE). You may modify and share
+free copies, but selling Keyforge or modified versions, charging for access
+to them, or bundling them with paid products requires prior written permission.
 
-Fonts, icons and ZMK keycode data keep their upstream licenses and credits in [assets](assets/).
+Copyright (c) 2026 Adrian Thomas.
+
+Previously MIT-licensed versions remain available under their original terms.
+Third-party dependencies and vendored code retain their upstream licenses.
+Fonts, icons and ZMK keycode data keep their upstream licenses and credits in
+[assets](assets/).
