@@ -1,0 +1,9 @@
+# Fixture provenance
+
+`keymaps/corne.json` is the one embedded sample project consumed by every frontend. Bindings are a prototype demonstration; geometry is converted from [ZMK Corne six-column physical metadata](https://github.com/zmkfirmware/zmk/blob/main/app/dts/layouts/foostan/corne/6column.dtsi), retrieved 2026-11-25. Coordinates and rotations are divided by 100; pivots are preserved. Array order matches the ZMK physical position map and shield matrix transform (rows 0–35, thumbs 36–41). No per-frontend key coordinates exist.
+
+ZMK geometry source is MIT licensed. Copyright (c) The ZMK Contributors. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies, and to permit persons to whom the Software is furnished to do so, subject to inclusion of this notice and permission notice in all copies or substantial portions. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE OR OTHER DEALINGS.
+
+Build steps and artifact metadata are deterministic constants in `core/src/services.rs`; artifact names intentionally include simulated. No UF2 file is created.
+
+The retrieved ZMK 6column.dtsi source SHA256 is `0858584eac2bf9006ba75e72cdfd8a8bda43762ae389860b237290198162710b`. The embedded JSON freezes that metadata even if the upstream main branch changes.

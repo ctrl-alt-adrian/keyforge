@@ -1,0 +1,869 @@
+{
+  "schema_version": 1,
+  "name": "Corne",
+  "repository": {
+    "owner": "sample",
+    "name": "corne-config",
+    "branch": "main"
+  },
+  "configuration": {
+    "board": "nice_nano_v2",
+    "shields": [
+      "corne_left",
+      "corne_right"
+    ]
+  },
+  "keyboard": {
+    "name": "Corne 42",
+    "source": "https://github.com/zmkfirmware/zmk/blob/main/app/dts/layouts/foostan/corne/6column.dtsi",
+    "keys": [
+      {
+        "position": 0,
+        "x": 0.0,
+        "y": 0.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 1,
+        "x": 1.0,
+        "y": 0.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 2,
+        "x": 2.0,
+        "y": 0.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 3,
+        "x": 3.0,
+        "y": 0.0,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 4,
+        "x": 4.0,
+        "y": 0.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 5,
+        "x": 5.0,
+        "y": 0.24,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 6,
+        "x": 8.0,
+        "y": 0.24,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 7,
+        "x": 9.0,
+        "y": 0.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 8,
+        "x": 10.0,
+        "y": 0.0,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 9,
+        "x": 11.0,
+        "y": 0.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 10,
+        "x": 12.0,
+        "y": 0.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 11,
+        "x": 13.0,
+        "y": 0.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 12,
+        "x": 0.0,
+        "y": 1.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 13,
+        "x": 1.0,
+        "y": 1.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 14,
+        "x": 2.0,
+        "y": 1.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 15,
+        "x": 3.0,
+        "y": 1.0,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 16,
+        "x": 4.0,
+        "y": 1.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 17,
+        "x": 5.0,
+        "y": 1.24,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 18,
+        "x": 8.0,
+        "y": 1.24,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 19,
+        "x": 9.0,
+        "y": 1.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 20,
+        "x": 10.0,
+        "y": 1.0,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 21,
+        "x": 11.0,
+        "y": 1.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 22,
+        "x": 12.0,
+        "y": 1.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 23,
+        "x": 13.0,
+        "y": 1.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 24,
+        "x": 0.0,
+        "y": 2.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 25,
+        "x": 1.0,
+        "y": 2.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 26,
+        "x": 2.0,
+        "y": 2.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 27,
+        "x": 3.0,
+        "y": 2.0,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 28,
+        "x": 4.0,
+        "y": 2.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 29,
+        "x": 5.0,
+        "y": 2.24,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 30,
+        "x": 8.0,
+        "y": 2.24,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 31,
+        "x": 9.0,
+        "y": 2.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 32,
+        "x": 10.0,
+        "y": 2.0,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 33,
+        "x": 11.0,
+        "y": 2.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 34,
+        "x": 12.0,
+        "y": 2.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 35,
+        "x": 13.0,
+        "y": 2.37,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 36,
+        "x": 3.5,
+        "y": 3.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      },
+      {
+        "position": 37,
+        "x": 4.5,
+        "y": 3.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 12.0,
+        "rotation_origin": {
+          "x": 4.5,
+          "y": 4.12
+        }
+      },
+      {
+        "position": 38,
+        "x": 5.48,
+        "y": 2.83,
+        "width": 1.0,
+        "height": 1.5,
+        "rotation": 24.0,
+        "rotation_origin": {
+          "x": 5.48,
+          "y": 4.33
+        }
+      },
+      {
+        "position": 39,
+        "x": 7.52,
+        "y": 2.83,
+        "width": 1.0,
+        "height": 1.5,
+        "rotation": -24.0,
+        "rotation_origin": {
+          "x": 8.52,
+          "y": 4.33
+        }
+      },
+      {
+        "position": 40,
+        "x": 8.5,
+        "y": 3.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": -12.0,
+        "rotation_origin": {
+          "x": 9.5,
+          "y": 4.12
+        }
+      },
+      {
+        "position": 41,
+        "x": 9.5,
+        "y": 3.12,
+        "width": 1.0,
+        "height": 1.0,
+        "rotation": 0.0,
+        "rotation_origin": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      }
+    ]
+  },
+  "keymap": {
+    "layers": [
+      {
+        "name": "Base",
+        "bindings": [
+          {
+            "KeyPress": "TAB"
+          },
+          {
+            "KeyPress": "Q"
+          },
+          {
+            "KeyPress": "W"
+          },
+          {
+            "KeyPress": "E"
+          },
+          {
+            "KeyPress": "R"
+          },
+          {
+            "KeyPress": "T"
+          },
+          {
+            "KeyPress": "Y"
+          },
+          {
+            "KeyPress": "U"
+          },
+          {
+            "KeyPress": "I"
+          },
+          {
+            "KeyPress": "O"
+          },
+          {
+            "KeyPress": "P"
+          },
+          {
+            "KeyPress": "BSPC"
+          },
+          {
+            "KeyPress": "LCTRL"
+          },
+          {
+            "KeyPress": "A"
+          },
+          {
+            "KeyPress": "S"
+          },
+          {
+            "KeyPress": "D"
+          },
+          {
+            "ModTap": {
+              "hold": "LSHFT",
+              "tap": "F"
+            }
+          },
+          {
+            "KeyPress": "G"
+          },
+          {
+            "KeyPress": "H"
+          },
+          {
+            "KeyPress": "J"
+          },
+          {
+            "KeyPress": "K"
+          },
+          {
+            "KeyPress": "L"
+          },
+          {
+            "KeyPress": "SEMI"
+          },
+          {
+            "KeyPress": "SQT"
+          },
+          {
+            "KeyPress": "LSHFT"
+          },
+          {
+            "KeyPress": "Z"
+          },
+          {
+            "KeyPress": "X"
+          },
+          {
+            "KeyPress": "C"
+          },
+          {
+            "KeyPress": "V"
+          },
+          {
+            "KeyPress": "B"
+          },
+          {
+            "KeyPress": "N"
+          },
+          {
+            "KeyPress": "M"
+          },
+          {
+            "KeyPress": "COMMA"
+          },
+          {
+            "KeyPress": "DOT"
+          },
+          {
+            "KeyPress": "FSLH"
+          },
+          {
+            "KeyPress": "ESC"
+          },
+          {
+            "KeyPress": "LGUI"
+          },
+          {
+            "MomentaryLayer": 1
+          },
+          {
+            "LayerTap": {
+              "layer": 1,
+              "tap": "SPACE"
+            }
+          },
+          {
+            "KeyPress": "RET"
+          },
+          {
+            "MomentaryLayer": 2
+          },
+          {
+            "KeyPress": "RALT"
+          }
+        ]
+      },
+      {
+        "name": "Lower",
+        "bindings": [
+          {
+            "KeyPress": "TAB"
+          },
+          {
+            "KeyPress": "N1"
+          },
+          {
+            "KeyPress": "N2"
+          },
+          {
+            "KeyPress": "N3"
+          },
+          {
+            "KeyPress": "N4"
+          },
+          {
+            "KeyPress": "N5"
+          },
+          {
+            "KeyPress": "N6"
+          },
+          {
+            "KeyPress": "N7"
+          },
+          {
+            "KeyPress": "N8"
+          },
+          {
+            "KeyPress": "N9"
+          },
+          {
+            "KeyPress": "N0"
+          },
+          {
+            "KeyPress": "BSPC"
+          },
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          {
+            "KeyPress": "LEFT"
+          },
+          {
+            "KeyPress": "DOWN"
+          },
+          {
+            "KeyPress": "UP"
+          },
+          {
+            "KeyPress": "RIGHT"
+          },
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent"
+        ]
+      },
+      {
+        "name": "Raise",
+        "bindings": [
+          {
+            "KeyPress": "F1"
+          },
+          {
+            "KeyPress": "F2"
+          },
+          {
+            "KeyPress": "F3"
+          },
+          {
+            "KeyPress": "F4"
+          },
+          {
+            "KeyPress": "F5"
+          },
+          {
+            "KeyPress": "F6"
+          },
+          {
+            "KeyPress": "F7"
+          },
+          {
+            "KeyPress": "F8"
+          },
+          {
+            "KeyPress": "F9"
+          },
+          {
+            "KeyPress": "F10"
+          },
+          {
+            "KeyPress": "F11"
+          },
+          {
+            "KeyPress": "F12"
+          },
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent"
+        ]
+      },
+      {
+        "name": "Adjust",
+        "bindings": [
+          "None",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          {
+            "ModTap": {
+              "hold": "LCTRL",
+              "tap": "F"
+            }
+          },
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent",
+          "Transparent"
+        ]
+      }
+    ]
+  }
+}
