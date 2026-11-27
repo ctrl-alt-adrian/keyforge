@@ -1,5 +1,7 @@
 # Owner preferences
 
+Create Git worktrees under the repository's `.worktrees/` directory, which is ignored by Git.
+
 Do not create, write, update or expand tests unless the user explicitly asks you to write them. Requests to implement, fix, verify, build, push or open a PR do not grant test authoring permission. Preserve existing tests; do not change assertions or fixtures merely to make checks pass without that permission.
 
 Keep verification proportionate to the change. Run relevant existing checks, avoid unnecessary repeated/full-suite runs, and report what was checked. When test authoring is explicitly requested, finish production changes before writing requested tests.
