@@ -266,6 +266,33 @@ pub fn cells(value: &str) -> String {
         .trim()
         .into()
 }
+/// Preserve each macro cell group, including controls, comments and inherited
+/// execution modes. Angle operators inside parenthesized expressions are not
+/// group delimiters.
+pub fn cell_groups(value: &str) -> Result<Vec<String>> {
+    let mut groups = Vec::new();
+    let mut start = None;
+    let mut depth = 0i32;
+    for token in tokens(value)? {
+        if token.text == "<" && depth == 0 {
+            start = Some(token.span.end);
+        } else if token.text == ">"
+            && depth == 0
+            && let Some(start) = start.take()
+        {
+            groups.push(value[start..token.span.start].trim().to_string());
+        }
+        depth += token.text.bytes().filter(|b| *b == b'(').count() as i32
+            - token.text.bytes().filter(|b| *b == b')').count() as i32;
+    }
+    if start.is_some() || depth != 0 {
+        return Err(invalid("Unbalanced macro cell group"));
+    }
+    if groups.is_empty() && !value.trim().is_empty() {
+        groups.push(value.trim().to_string());
+    }
+    Ok(groups)
+}
 pub fn quote(value: &str) -> String {
     format!(
         "\"{}\"",
@@ -316,16 +343,14 @@ pub fn binding_spans(value: &str) -> Result<Vec<Range<usize>>> {
 }
 pub fn binding(value: &str) -> Result<Binding> {
     let value = value.trim();
-    if value.contains(['{', '}', ';', '<', '>', '"', ',']) {
-        return Err(invalid(
-            "Enter a single binding without Devicetree delimiters",
-        ));
-    }
+    let (reference, arguments) = crate::bindings::split(value)?;
     let spans = binding_spans(value)?;
     if spans.len() != 1 {
         return Err(invalid("Expected one behavior binding"));
     }
-    let parts: Vec<_> = value.split_whitespace().collect();
+    let parts: Vec<_> = std::iter::once(reference.as_str())
+        .chain(arguments.iter().map(String::as_str))
+        .collect();
     Ok(match parts.as_slice() {
         ["&kp", code] => Binding::KeyPress(KeyCode((*code).into())),
         ["&mt", hold, tap] if crate::MODIFIERS.contains(hold) => Binding::ModTap {
@@ -509,6 +534,16 @@ impl Document {
             prop.value.start + span.start..prop.value.start + span.end,
             value,
         );
+        for header in crate::bindings::headers(value) {
+            let header = format!("dt-bindings/zmk/{header}");
+            if !self
+                .source
+                .lines()
+                .any(|line| line.trim_start().starts_with("#include") && line.contains(&header))
+            {
+                self.source.insert_str(0, &format!("#include <{header}>\n"));
+            }
+        }
         Ok(())
     }
     pub fn set_properties(

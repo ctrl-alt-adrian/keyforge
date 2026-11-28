@@ -1,0 +1,644 @@
+SYSTEM_POWER	System Power Down
+SYS_PWR	System Power Down
+SYSTEM_SLEEP	System Sleep
+SYS_SLEEP	System Sleep
+SYSTEM_WAKE_UP	System Wake Up
+SYS_WAKE	System Wake Up
+A	Keyboard a and A
+B	Keyboard b and B
+C	Keyboard c and C
+D	Keyboard d and D
+E	Keyboard e and E
+F	Keyboard f and F
+G	Keyboard g and G
+H	Keyboard h and H
+I	Keyboard i and I
+J	Keyboard j and J
+K	Keyboard k and K
+L	Keyboard l and L
+M	Keyboard m and M
+N	Keyboard n and N
+O	Keyboard o and O
+P	Keyboard p and P
+Q	Keyboard q and Q
+R	Keyboard r and R
+S	Keyboard s and S
+T	Keyboard t and T
+U	Keyboard u and U
+V	Keyboard v and V
+W	Keyboard w and W
+X	Keyboard x and X
+Y	Keyboard y and Y
+Z	Keyboard z and Z
+NUMBER_1	Keyboard 1 and ! (Exclamation)
+N1	Keyboard 1 and ! (Exclamation)
+NUM_1	Keyboard 1 and ! (Exclamation)
+EXCLAMATION	Keyboard ! (Exclamation)
+EXCL	Keyboard ! (Exclamation)
+BANG	Keyboard ! (Exclamation)
+NUMBER_2	Keyboard 2 and @ (At sign)
+N2	Keyboard 2 and @ (At sign)
+NUM_2	Keyboard 2 and @ (At sign)
+AT_SIGN	Keyboard @ (At sign)
+AT	Keyboard @ (At sign)
+ATSN	Keyboard @ (At sign)
+NUMBER_3	Keyboard 3 and # (Hash/Number)
+N3	Keyboard 3 and # (Hash/Number)
+NUM_3	Keyboard 3 and # (Hash/Number)
+HASH	Keyboard # (Hash/Number)
+POUND	Keyboard # (Hash/Number)
+NUMBER_4	Keyboard 4 and $ (Dollar)
+N4	Keyboard 4 and $ (Dollar)
+NUM_4	Keyboard 4 and $ (Dollar)
+DOLLAR	Keyboard $ (Dollar)
+DLLR	Keyboard $ (Dollar)
+NUMBER_5	Keyboard 5 and % (Percent)
+N5	Keyboard 5 and % (Percent)
+NUM_5	Keyboard 5 and % (Percent)
+PERCENT	Keyboard % (Percent)
+PRCNT	Keyboard % (Percent)
+PRCT	Keyboard % (Percent)
+NUMBER_6	Keyboard 6 and ^ (Caret)
+N6	Keyboard 6 and ^ (Caret)
+NUM_6	Keyboard 6 and ^ (Caret)
+CARET	Keyboard ^ (Caret)
+CRRT	Keyboard ^ (Caret)
+NUMBER_7	Keyboard 7 and & (Ampersand)
+N7	Keyboard 7 and & (Ampersand)
+NUM_7	Keyboard 7 and & (Ampersand)
+AMPERSAND	Keyboard & (Ampersand)
+AMPS	Keyboard & (Ampersand)
+NUMBER_8	Keyboard 8 and * (Asterisk)
+N8	Keyboard 8 and * (Asterisk)
+NUM_8	Keyboard 8 and * (Asterisk)
+ASTERISK	Keyboard * (Asterisk)
+ASTRK	Keyboard * (Asterisk)
+STAR	Keyboard * (Asterisk)
+NUMBER_9	Keyboard 9 and ( (Left Parenthesis)
+N9	Keyboard 9 and ( (Left Parenthesis)
+NUM_9	Keyboard 9 and ( (Left Parenthesis)
+LEFT_PARENTHESIS	Keyboard ( (Left Parenthesis)
+LPAR	Keyboard ( (Left Parenthesis)
+LPRN	Keyboard ( (Left Parenthesis)
+NUMBER_0	Keyboard 0 and ) (Right Parenthesis)
+N0	Keyboard 0 and ) (Right Parenthesis)
+NUM_0	Keyboard 0 and ) (Right Parenthesis)
+RIGHT_PARENTHESIS	Keyboard ) (Right Parenthesis)
+RPAR	Keyboard ) (Right Parenthesis)
+RPRN	Keyboard ) (Right Parenthesis)
+RETURN	Keyboard Return (Enter)
+ENTER	Keyboard Return (Enter)
+RET	Keyboard Return (Enter)
+ESCAPE	Keyboard Escape
+ESC	Keyboard Escape
+BACKSPACE	Keyboard Backspace
+BSPC	Keyboard Backspace
+BKSP	Keyboard Backspace
+TAB	Keyboard Tab
+SPACE	Keyboard Space
+SPC	Keyboard Space
+MINUS	Keyboard - and _ (Minus and Underscore)
+UNDERSCORE	Keyboard _ (Underscore)
+UNDER	Keyboard _ (Underscore)
+EQUAL	Keyboard = and + (Equal and Plus)
+EQL	Keyboard = and + (Equal and Plus)
+PLUS	Keyboard + (Plus)
+LEFT_BRACKET	Keyboard [ and { (Left Bracket and Left Brace)
+LBKT	Keyboard [ and { (Left Bracket and Left Brace)
+LEFT_BRACE	Keyboard { (Left Brace)
+LBRC	Keyboard { (Left Brace)
+LCUR	Keyboard { (Left Brace)
+RIGHT_BRACKET	Keyboard ] and } (Right Bracket and Right Brace)
+RBKT	Keyboard ] and } (Right Bracket and Right Brace)
+RIGHT_BRACE	Keyboard } (Right Brace)
+RBRC	Keyboard } (Right Brace)
+RCUR	Keyboard } (Right Brace)
+BACKSLASH	Keyboard \ and | (Backslash and Pipe)
+BSLH	Keyboard \ and | (Backslash and Pipe)
+PIPE	Keyboard | (Pipe)
+NON_US_HASH	Keyboard Non-US # and ~ (Non-US Hash/Number and Tilde)
+NUHS	Keyboard Non-US # and ~ (Non-US Hash/Number and Tilde)
+TILDE2	Keyboard ~ (Tilde)
+SEMICOLON	Keyboard ; and : (Semicolon and Colon)
+SEMI	Keyboard ; and : (Semicolon and Colon)
+SCLN	Keyboard ; and : (Semicolon and Colon)
+COLON	Keyboard : (Colon)
+COLN	Keyboard : (Colon)
+SINGLE_QUOTE	Keyboard ' and " (Apostrophe and Quote)
+SQT	Keyboard ' and " (Apostrophe and Quote)
+APOSTROPHE	Keyboard ' and " (Apostrophe and Quote)
+APOS	Keyboard ' and " (Apostrophe and Quote)
+QUOT	Keyboard ' and " (Apostrophe and Quote)
+DOUBLE_QUOTES	Keyboard " (Quote)
+DQT	Keyboard " (Quote)
+GRAVE	Keyboard ` and ~ (Grave Accent and Tilde)
+GRAV	Keyboard ` and ~ (Grave Accent and Tilde)
+TILDE	Keyboard ~ (Tilde)
+TILD	Keyboard ~ (Tilde)
+COMMA	Keyboard , and < (Comma and Less Than)
+CMMA	Keyboard , and < (Comma and Less Than)
+LESS_THAN	Keyboard < (Less Than)
+LT	Keyboard < (Less Than)
+LABT	Keyboard < (Less Than)
+PERIOD	Keyboard . and > (Period and Greater Than)
+DOT	Keyboard . and > (Period and Greater Than)
+GREATER_THAN	Keyboard > (Greater Than)
+GT	Keyboard > (Greater Than)
+RABT	Keyboard > (Greater Than)
+SLASH	Keyboard / and ? (Forward Slash and Question)
+FSLH	Keyboard / and ? (Forward Slash and Question)
+QUESTION	Keyboard ? (Question)
+QMARK	Keyboard ? (Question)
+CAPSLOCK	Keyboard Caps Lock
+CAPS	Keyboard Caps Lock
+CLCK	Keyboard Caps Lock
+F1	Keyboard F1
+F2	Keyboard F2
+F3	Keyboard F3
+F4	Keyboard F4
+F5	Keyboard F5
+F6	Keyboard F6
+F7	Keyboard F7
+F8	Keyboard F8
+F9	Keyboard F9
+F10	Keyboard F10
+F11	Keyboard F11
+F12	Keyboard F12
+PRINTSCREEN	Keyboard Print Screen
+PSCRN	Keyboard Print Screen
+PRSC	Keyboard Print Screen
+SCROLLLOCK	Keyboard Scroll Lock
+SLCK	Keyboard Scroll Lock
+SCLK	Keyboard Scroll Lock
+PAUSE_BREAK	Keyboard Pause/Break
+PAUS	Keyboard Pause/Break
+INSERT	Keyboard Insert
+INS	Keyboard Insert
+HOME	Keyboard Home
+PAGE_UP	Keyboard Page Up
+PG_UP	Keyboard Page Up
+PGUP	Keyboard Page Up
+DELETE	Keyboard Delete
+DEL	Keyboard Delete
+END	Keyboard End
+PAGE_DOWN	Keyboard Page Down
+PG_DN	Keyboard Page Down
+PGDN	Keyboard Page Down
+RIGHT_ARROW	Keyboard Right Arrow
+RIGHT	Keyboard Right Arrow
+RARW	Keyboard Right Arrow
+LEFT_ARROW	Keyboard Left Arrow
+LEFT	Keyboard Left Arrow
+LARW	Keyboard Left Arrow
+DOWN_ARROW	Keyboard Down Arrow
+DOWN	Keyboard Down Arrow
+DARW	Keyboard Down Arrow
+UP_ARROW	Keyboard Up Arrow
+UP	Keyboard Up Arrow
+UARW	Keyboard Up Arrow
+KP_NUMLOCK	Keypad Numlock and Clear
+KP_NUM	Keypad Numlock and Clear
+KP_NLCK	Keypad Numlock and Clear
+CLEAR2	Keypad Clear
+KP_DIVIDE	Keypad / (Slash/Divide)
+KP_SLASH	Keypad / (Slash/Divide)
+KDIV	Keypad / (Slash/Divide)
+KP_MULTIPLY	Keypad * (Multiply)
+KP_ASTERISK	Keypad * (Multiply)
+KMLT	Keypad * (Multiply)
+KP_MINUS	Keypad - (Minus)
+KP_SUBTRACT	Keypad - (Minus)
+KMIN	Keypad - (Minus)
+KP_PLUS	Keypad + (Plus)
+KPLS	Keypad + (Plus)
+KP_ENTER	Keypad Enter
+KP_NUMBER_1	Keypad 1
+KP_N1	Keypad 1
+KP_NUMBER_2	Keypad 2
+KP_N2	Keypad 2
+KP_NUMBER_3	Keypad 3
+KP_N3	Keypad 3
+KP_NUMBER_4	Keypad 4
+KP_N4	Keypad 4
+KP_NUMBER_5	Keypad 5
+KP_N5	Keypad 5
+KP_NUMBER_6	Keypad 6
+KP_N6	Keypad 6
+KP_NUMBER_7	Keypad 7
+KP_N7	Keypad 7
+KP_NUMBER_8	Keypad 8
+KP_N8	Keypad 8
+KP_NUMBER_9	Keypad 9
+KP_N9	Keypad 9
+KP_NUMBER_0	Keypad 0
+KP_N0	Keypad 0
+KP_DOT	Keypad . (Dot)
+NON_US_BACKSLASH	Keyboard Non-US \ and | (Non-us Backslash and Pipe)
+NON_US_BSLH	Keyboard Non-US \ and | (Non-us Backslash and Pipe)
+NUBS	Keyboard Non-US \ and | (Non-us Backslash and Pipe)
+PIPE2	Keyboard Pipe
+K_APPLICATION	Keyboard Application (Context Menu)
+K_APP	Keyboard Application (Context Menu)
+K_CONTEXT_MENU	Keyboard Application (Context Menu)
+K_CMENU	Keyboard Application (Context Menu)
+GUI	Keyboard Application (Context Menu)
+K_POWER	Keyboard Power
+K_PWR	Keyboard Power
+KP_EQUAL	Keypad = (Equal)
+F13	Keyboard F13
+F14	Keyboard F14
+F15	Keyboard F15
+F16	Keyboard F16
+F17	Keyboard F17
+F18	Keyboard F18
+F19	Keyboard F19
+F20	Keyboard F20
+F21	Keyboard F21
+F22	Keyboard F22
+F23	Keyboard F23
+F24	Keyboard F24
+K_EXECUTE	Keyboard Execute
+K_EXEC	Keyboard Execute
+K_HELP	Keyboard Help
+K_MENU	Keyboard Menu
+K_SELECT	Keyboard Select
+K_STOP	Keyboard Stop
+K_AGAIN	Keyboard Again
+K_REDO	Keyboard Again
+K_UNDO	Keyboard Undo
+UNDO	Keyboard Undo
+K_CUT	Keyboard Cut
+CUT	Keyboard Cut
+K_COPY	Keyboard Copy
+COPY	Keyboard Copy
+K_PASTE	Keyboard Paste
+PSTE	Keyboard Paste
+K_FIND	Keyboard Find
+K_MUTE	Keyboard Mute
+K_VOLUME_UP	Keyboard Volume Up
+K_VOL_UP	Keyboard Volume Up
+VOLU	Keyboard Volume Up
+K_VOLUME_DOWN	Keyboard Volume Down
+K_VOL_DN	Keyboard Volume Down
+VOLD	Keyboard Volume Down
+LOCKING_CAPS	Keyboard Locking Caps Lock
+LCAPS	Keyboard Locking Caps Lock
+LOCKING_NUM	Keyboard Locking Num Lock
+LNLCK	Keyboard Locking Num Lock
+LOCKING_SCROLL	Keyboard Locking Scroll Lock
+LSLCK	Keyboard Locking Scroll Lock
+KP_COMMA	Keypad , (Comma)
+KP_EQUAL_AS400	Keypad = (Equal) AS/400
+INTERNATIONAL_1	Keyboard International 1
+INT1	Keyboard International 1
+INT_RO	Keyboard International 1
+INTERNATIONAL_2	Keyboard International 2
+INT2	Keyboard International 2
+INT_KATAKANAHIRAGANA	Keyboard International 2
+INT_KANA	Keyboard International 2
+INTERNATIONAL_3	Keyboard International 3
+INT3	Keyboard International 3
+INT_YEN	Keyboard International 3
+INTERNATIONAL_4	Keyboard International 4
+INT4	Keyboard International 4
+INT_HENKAN	Keyboard International 4
+INTERNATIONAL_5	Keyboard International 5
+INT5	Keyboard International 5
+INT_MUHENKAN	Keyboard International 5
+INTERNATIONAL_6	Keyboard International 6
+INT6	Keyboard International 6
+INT_KPJPCOMMA	Keyboard International 6
+INTERNATIONAL_7	Keyboard International 7
+INT7	Keyboard International 7
+INTERNATIONAL_8	Keyboard International 8
+INT8	Keyboard International 8
+INTERNATIONAL_9	Keyboard International 9
+INT9	Keyboard International 9
+LANGUAGE_1	Keyboard Language 1
+LANG1	Keyboard Language 1
+LANG_HANGEUL	Keyboard Language 1
+LANGUAGE_2	Keyboard Language 2
+LANG2	Keyboard Language 2
+LANG_HANJA	Keyboard Language 2
+LANGUAGE_3	Keyboard Language 3
+LANG3	Keyboard Language 3
+LANG_KATAKANA	Keyboard Language 3
+LANGUAGE_4	Keyboard Language 4
+LANG4	Keyboard Language 4
+LANG_HIRAGANA	Keyboard Language 4
+LANGUAGE_5	Keyboard Language 5
+LANG5	Keyboard Language 5
+LANG_ZENKAKUHANKAKU	Keyboard Language 5
+LANGUAGE_6	Keyboard Language 6
+LANG6	Keyboard Language 6
+LANGUAGE_7	Keyboard Language 7
+LANG7	Keyboard Language 7
+LANGUAGE_8	Keyboard Language 8
+LANG8	Keyboard Language 8
+LANGUAGE_9	Keyboard Language 9
+LANG9	Keyboard Language 9
+ALT_ERASE	Keyboard Alternate Erase
+SYSREQ	Keyboard SysReq/Attention
+ATTENTION	Keyboard SysReq/Attention
+K_CANCEL	Keyboard Cancel
+CLEAR	Keyboard Clear
+PRIOR	Keyboard Prior
+RETURN2	Keyboard Return
+RET2	Keyboard Return
+SEPARATOR	Keyboard Separator
+OUT	Keyboard Out
+OPER	Keyboard Oper
+CLEAR_AGAIN	Keyboard Clear/Again
+CRSEL	Keyboard CrSel/Props
+EXSEL	Keyboard ExSel
+CURU	Keyboard Currency Unit
+KP_LEFT_PARENTHESIS	Keypad ( (Left Parenthesis)
+KP_LPAR	Keypad ( (Left Parenthesis)
+KP_RIGHT_PARENTHESIS	Keypad ) (Right Parenthesis)
+KP_RPAR	Keypad ) (Right Parenthesis)
+KSPC	Keypad Space
+KP_CLEAR	Keypad Clear
+LEFT_CONTROL	Keyboard Left Control
+LCTRL	Keyboard Left Control
+LCTL	Keyboard Left Control
+LEFT_SHIFT	Keyboard Left Shift
+LSHIFT	Keyboard Left Shift
+LSHFT	Keyboard Left Shift
+LSFT	Keyboard Left Shift
+LEFT_ALT	Keyboard Left Alt
+LALT	Keyboard Left Alt
+LEFT_GUI	Keyboard Left GUI (Windows / Command / Meta)
+LGUI	Keyboard Left GUI (Windows / Command / Meta)
+LEFT_WIN	Keyboard Left GUI (Windows / Command / Meta)
+LWIN	Keyboard Left GUI (Windows / Command / Meta)
+LEFT_COMMAND	Keyboard Left GUI (Windows / Command / Meta)
+LCMD	Keyboard Left GUI (Windows / Command / Meta)
+LEFT_META	Keyboard Left GUI (Windows / Command / Meta)
+LMETA	Keyboard Left GUI (Windows / Command / Meta)
+RIGHT_CONTROL	Keyboard Right Control
+RCTRL	Keyboard Right Control
+RCTL	Keyboard Right Control
+RIGHT_SHIFT	Keyboard Right Shift
+RSHIFT	Keyboard Right Shift
+RSHFT	Keyboard Right Shift
+RSFT	Keyboard Right Shift
+RIGHT_ALT	Keyboard Right Alt
+RALT	Keyboard Right Alt
+RIGHT_GUI	Keyboard Right GUI (Windows / Command / Meta)
+RGUI	Keyboard Right GUI (Windows / Command / Meta)
+RIGHT_WIN	Keyboard Right GUI (Windows / Command / Meta)
+RWIN	Keyboard Right GUI (Windows / Command / Meta)
+RIGHT_COMMAND	Keyboard Right GUI (Windows / Command / Meta)
+RCMD	Keyboard Right GUI (Windows / Command / Meta)
+RIGHT_META	Keyboard Right GUI (Windows / Command / Meta)
+RMETA	Keyboard Right GUI (Windows / Command / Meta)
+K_PLAY_PAUSE	Keyboard Play/Pause
+K_PP	Keyboard Play/Pause
+K_STOP2	Keyboard Stop
+K_PREVIOUS	Keyboard Previous
+K_PREV	Keyboard Previous
+K_NEXT	Keyboard Next
+K_EJECT	Keyboard Eject
+K_VOLUME_UP2	Keyboard Volume Up
+K_VOL_UP2	Keyboard Volume Up
+K_VOLUME_DOWN2	Keyboard Volume Down
+K_VOL_DN2	Keyboard Volume Down
+K_MUTE2	Keyboard Mute
+K_WWW	Keyboard WWW
+K_BACK	Keyboard Back
+K_FORWARD	Keyboard Forward
+K_STOP3	Keyboard Stop
+K_FIND2	Keyboard Find
+K_SCROLL_UP	Keyboard Scroll Up
+K_SCROLL_DOWN	Keyboard Scroll Down
+K_EDIT	Keyboard Edit
+K_SLEEP	Keyboard Sleep
+K_LOCK	Keyboard Lock
+K_SCREENSAVER	Keyboard Lock
+K_COFFEE	Keyboard Lock
+K_REFRESH	Keyboard Refresh
+K_CALCULATOR	Keyboard Calculator
+K_CALC	Keyboard Calculator
+C_POWER	Consumer Power
+C_PWR	Consumer Power
+C_RESET	Consumer Reset
+C_SLEEP	Consumer Sleep
+C_SLEEP_MODE	Consumer Sleep Mode
+C_MENU	Consumer Menu
+C_MENU_PICK	Consumer Menu Pick
+C_MENU_SELECT	Consumer Menu Pick
+C_MENU_UP	Consumer Menu Up
+C_MENU_DOWN	Consumer Menu Down
+C_MENU_LEFT	Consumer Menu Left
+C_MENU_RIGHT	Consumer Menu Right
+C_MENU_ESCAPE	Consumer Menu Escape
+C_MENU_ESC	Consumer Menu Escape
+C_MENU_INCREASE	Consumer Menu Value Increase
+C_MENU_INC	Consumer Menu Value Increase
+C_MENU_DECREASE	Consumer Menu Value Decrease
+C_MENU_DEC	Consumer Menu Value Decrease
+C_DATA_ON_SCREEN	Consumer Data On Screen
+C_CAPTIONS	Consumer Closed Caption
+C_SUBTITLES	Consumer Closed Caption
+C_SNAPSHOT	Consumer Snapshot
+C_PIP	Consumer Picture-in-Picture Toggle
+C_RED_BUTTON	Consumer Red Menu Button
+C_RED	Consumer Red Menu Button
+C_GREEN_BUTTON	Consumer Green Menu Button
+C_GREEN	Consumer Green Menu Button
+C_BLUE_BUTTON	Consumer Blue Menu Button
+C_BLUE	Consumer Blue Menu Button
+C_YELLOW_BUTTON	Consumer Yellow Menu Button
+C_YELLOW	Consumer Yellow Menu Button
+C_ASPECT	Consumer Aspect
+C_BRIGHTNESS_INC	Consumer Display Brightness Increment
+C_BRI_INC	Consumer Display Brightness Increment
+C_BRI_UP	Consumer Display Brightness Increment
+C_BRIGHTNESS_DEC	Consumer Display Brightness Decrement
+C_BRI_DEC	Consumer Display Brightness Decrement
+C_BRI_DN	Consumer Display Brightness Decrement
+C_BACKLIGHT_TOGGLE	Consumer Display Backlight Toggle
+C_BKLT_TOG	Consumer Display Backlight Toggle
+C_BRIGHTNESS_MINIMUM	Consumer Display Set Brightness to Minimum
+C_BRI_MIN	Consumer Display Set Brightness to Minimum
+C_BRIGHTNESS_MAXIMUM	Consumer Display Set Brightness to Maximum
+C_BRI_MAX	Consumer Display Set Brightness to Maximum
+C_BRIGHTNESS_AUTO	Consumer Display Set Auto Brightness
+C_BRI_AUTO	Consumer Display Set Auto Brightness
+C_MEDIA_STEP	Consumer Mode Step
+C_MODE_STEP	Consumer Mode Step
+C_RECALL_LAST	Consumer Recall Last
+C_CHAN_LAST	Consumer Recall Last
+C_MEDIA_COMPUTER	Consumer Media Select Computer
+C_MEDIA_TV	Consumer Media Select TV
+C_MEDIA_WWW	Consumer Media Select WWW
+C_MEDIA_DVD	Consumer Media Select DVD
+C_MEDIA_PHONE	Consumer Media Select Telephone
+C_MEDIA_GUIDE	Consumer Media Select Program Guide
+C_MEDIA_VIDEOPHONE	Consumer Media Select Video Phone
+C_MEDIA_GAMES	Consumer Media Select Games
+C_MEDIA_MESSAGES	Consumer Media Select Messages
+C_MEDIA_CD	Consumer Media Select CD
+C_MEDIA_VCR	Consumer Media Select VCR
+C_MEDIA_TUNER	Consumer Media Select Tuner
+C_QUIT	Consumer Quit
+C_HELP	Consumer Help
+C_MEDIA_TAPE	Consumer Media Select Tape
+C_MEDIA_CABLE	Consumer Media Select Cable
+C_MEDIA_SATELLITE	Consumer Media Select Satellite
+C_MEDIA_HOME	Consumer Media Select Home
+C_CHANNEL_INC	Consumer Channel Increment
+C_CHAN_INC	Consumer Channel Increment
+C_CHANNEL_DEC	Consumer Channel Decrement
+C_CHAN_DEC	Consumer Channel Decrement
+C_MEDIA_VCR_PLUS	Consumer VCR Plus
+C_PLAY	Consumer Play
+C_PAUSE	Consumer Pause
+C_RECORD	Consumer Record
+C_REC	Consumer Record
+C_FAST_FORWARD	Consumer Fast Forward
+C_FF	Consumer Fast Forward
+C_REWIND	Consumer Rewind
+C_RW	Consumer Rewind
+C_NEXT	Consumer Scan Next Track
+M_NEXT	Consumer Scan Next Track
+C_PREVIOUS	Consumer Scan Previous Track
+C_PREV	Consumer Scan Previous Track
+M_PREV	Consumer Scan Previous Track
+C_STOP	Consumer Stop
+M_STOP	Consumer Stop
+C_EJECT	Consumer Eject
+M_EJCT	Consumer Eject
+C_RANDOM_PLAY	Consumer Random Play
+C_SHUFFLE	Consumer Random Play
+C_REPEAT	Consumer Repeat
+C_SLOW_TRACKING	Consumer Slow Tracking
+C_SLOW2	Consumer Slow Tracking
+C_STOP_EJECT	Consumer Stop/Eject
+C_PLAY_PAUSE	Consumer Play/Pause
+C_PP	Consumer Play/Pause
+M_PLAY	Consumer Play/Pause
+C_VOICE_COMMAND	Consumer Voice Command
+C_MUTE	Consumer Mute
+M_MUTE	Consumer Mute
+C_BASS_BOOST	Consumer Bass Boost
+C_VOLUME_UP	Consumer Volume Increment
+C_VOL_UP	Consumer Volume Increment
+M_VOLU	Consumer Volume Increment
+C_VOLUME_DOWN	Consumer Volume Decrement
+C_VOL_DN	Consumer Volume Decrement
+M_VOLD	Consumer Volume Decrement
+C_SLOW	Consumer Slow
+C_ALTERNATE_AUDIO_INCREMENT	Consumer Alternate Audio Increment
+C_ALT_AUDIO_INC	Consumer Alternate Audio Increment
+C_AL_CCC	Consumer AL Consumer Control Configuration
+C_AL_WORD	Consumer AL Word Processor
+C_AL_TEXT_EDITOR	Consumer AL Text Editor
+C_AL_SPREADSHEET	Consumer AL Spreadsheet
+C_AL_SHEET	Consumer AL Spreadsheet
+C_AL_GRAPHICS_EDITOR	Consumer AL Graphics Editor
+C_AL_PRESENTATION	Consumer AL Presentation App
+C_AL_DATABASE	Consumer AL Database App
+C_AL_DB	Consumer AL Database App
+C_AL_EMAIL	Consumer AL Email Reader
+C_AL_MAIL	Consumer AL Email Reader
+C_AL_NEWS	Consumer AL Newsreader
+C_AL_VOICEMAIL	Consumer AL Voicemail
+C_AL_CONTACTS	Consumer AL Contacts/Address Book
+C_AL_ADDRESS_BOOK	Consumer AL Contacts/Address Book
+C_AL_CALENDAR	Consumer AL Calendar/Schedule
+C_AL_CAL	Consumer AL Calendar/Schedule
+C_AL_TASK_MANAGER	Consumer AL Task/Project Manager
+C_AL_JOURNAL	Consumer AL Log/Journal/Timecard
+C_AL_FINANCE	Consumer AL Checkbook/Finance
+C_AL_CALCULATOR	Consumer AL Calculator
+C_AL_CALC	Consumer AL Calculator
+C_AL_AV_CAPTURE_PLAYBACK	Consumer AL A/V Capture/Playback
+C_AL_MY_COMPUTER	Consumer AL Local Machine Browser
+C_AL_WWW	Consumer AL Internet Browser
+C_AL_NETWORK_CHAT	Consumer AL Network Chat
+C_AL_CHAT	Consumer AL Network Chat
+C_AL_LOGOFF	Consumer AL Logoff
+C_AL_LOCK	Consumer AL Terminal Lock/Screensaver
+C_AL_SCREENSAVER	Consumer AL Terminal Lock/Screensaver
+C_AL_COFFEE	Consumer AL Terminal Lock/Screensaver
+C_AL_CONTROL_PANEL	Consumer AL Control Panel
+C_AL_SELECT_TASK	Consumer AL Select Task/Application
+C_AL_NEXT_TASK	Consumer AL Next Task/Application
+C_AL_PREVIOUS_TASK	Consumer AL Previous Task/Application
+C_AL_PREV_TASK	Consumer AL Previous Task/Application
+C_AL_HELP	Consumer AL Integrated Help Center
+C_AL_DOCUMENTS	Consumer AL Documents
+C_AL_DOCS	Consumer AL Documents
+C_AL_SPELLCHECK	Consumer AL Spell Check
+C_AL_SPELL	Consumer AL Spell Check
+C_AL_KEYBOARD_LAYOUT	Consumer AL Keyboard Layout
+C_AL_SCREEN_SAVER	Consumer AL Screen Saver
+C_AL_FILE_BROWSER	Consumer AL File Browser
+C_AL_FILES	Consumer AL File Browser
+C_AL_IMAGE_BROWSER	Consumer AL Image Browser
+C_AL_IMAGES	Consumer AL Image Browser
+C_AL_AUDIO_BROWSER	Consumer AL Audio Browser
+C_AL_AUDIO	Consumer AL Audio Browser
+C_AL_MUSIC	Consumer AL Audio Browser
+C_AL_MOVIE_BROWSER	Consumer AL Movie Browser
+C_AL_MOVIES	Consumer AL Movie Browser
+C_AL_INSTANT_MESSAGING	Consumer AL Instant Messaging
+C_AL_IM	Consumer AL Instant Messaging
+C_AL_OEM_FEATURES	Consumer AL OEM Features/Tips/Tutorial Browser
+C_AL_TIPS	Consumer AL OEM Features/Tips/Tutorial Browser
+C_AL_TUTORIAL	Consumer AL OEM Features/Tips/Tutorial Browser
+C_AC_NEW	Consumer AC New
+C_AC_OPEN	Consumer AC Open
+C_AC_CLOSE	Consumer AC Close
+C_AC_EXIT	Consumer AC Exit
+C_AC_SAVE	Consumer AC Save
+C_AC_PRINT	Consumer AC Print
+C_AC_PROPERTIES	Consumer AC Properties
+C_AC_PROPS	Consumer AC Properties
+C_AC_UNDO	Consumer AC Undo
+C_AC_COPY	Consumer AC Copy
+C_AC_CUT	Consumer AC Cut
+C_AC_PASTE	Consumer AC Paste
+C_AC_FIND	Consumer AC Find
+C_AC_SEARCH	Consumer AC Search
+C_AC_GOTO	Consumer AC Go To
+C_AC_HOME	Consumer AC Home
+C_AC_BACK	Consumer AC Back
+C_AC_FORWARD	Consumer AC Forward
+C_AC_STOP	Consumer AC Stop
+C_AC_REFRESH	Consumer AC Refresh
+C_AC_BOOKMARKS	Consumer AC Bookmarks
+C_AC_FAVORITES	Consumer AC Bookmarks
+C_AC_FAVOURITES	Consumer AC Bookmarks
+C_AC_ZOOM_IN	Consumer AC Zoom In
+C_AC_ZOOM_OUT	Consumer AC Zoom Out
+C_AC_ZOOM	Consumer AC Zoom
+C_AC_VIEW_TOGGLE	Consumer AC View Toggle
+C_AC_SCROLL_UP	Consumer AC Scroll Up
+C_AC_SCROLL_DOWN	Consumer AC Scroll Down
+C_AC_EDIT	Consumer AC Edit
+C_AC_CANCEL	Consumer AC Cancel
+C_AC_INSERT	Consumer AC Insert Mode
+C_AC_INS	Consumer AC Insert Mode
+C_AC_DEL	Consumer AC Delete
+C_AC_REDO	Consumer AC Redo/Repeat
+C_AC_REPLY	Consumer AC Reply
+C_AC_FORWARD_MAIL	Consumer AC Forward Msg
+C_AC_SEND	Consumer AC Send
+C_AC_DESKTOP_SHOW_ALL_WINDOWS	Consumer AC Desktop Show All Windows
+C_AC_DESKTOP_SHOW_ALL_APPLICATIONS	Consumer AC Desktop Show All Applications
+C_KEYBOARD_INPUT_ASSIST_PREVIOUS	Consumer Keyboard Input Assist Previous
+C_KBIA_PREV	Consumer Keyboard Input Assist Previous
+C_KEYBOARD_INPUT_ASSIST_NEXT	Consumer Keyboard Input Assist Next
+C_KBIA_NEXT	Consumer Keyboard Input Assist Next
+C_KEYBOARD_INPUT_ASSIST_PREVIOUS_GROUP	Consumer Keyboard Input Assist Previous Group
+C_KBIA_PREV_GRP	Consumer Keyboard Input Assist Previous Group
+C_KEYBOARD_INPUT_ASSIST_NEXT_GROUP	Consumer Keyboard Input Assist Next Group
+C_KBIA_NEXT_GRP	Consumer Keyboard Input Assist Next Group
+C_KEYBOARD_INPUT_ASSIST_ACCEPT	Consumer Keyboard Input Assist Accept
+C_KBIA_ACCEPT	Consumer Keyboard Input Assist Accept
+C_KEYBOARD_INPUT_ASSIST_CANCEL	Consumer Keyboard Input Assist Cancel
+C_KBIA_CANCEL	Consumer Keyboard Input Assist Cancel
+C_AC_NEXT_KEYBOARD_LAYOUT_SELECT	Apple Globe key
+GLOBE	Apple Globe key

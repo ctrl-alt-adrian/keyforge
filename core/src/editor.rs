@@ -101,6 +101,15 @@ pub struct Draft {
     pub error: Option<String>,
 }
 impl Draft {
+    pub fn sequence_group(&self, index: usize) -> String {
+        let prefix = match self.get(&format!("step-mode-{index}")) {
+            "Tap" => "&macro_tap ",
+            "Press" => "&macro_press ",
+            "Release" => "&macro_release ",
+            _ => "",
+        };
+        format!("{prefix}{}", self.get(&format!("step-bindings-{index}")))
+    }
     pub fn get(&self, id: &str) -> &str {
         self.fields
             .iter()
@@ -307,8 +316,16 @@ pub fn entries(project: &Project, section: Section, layer: usize) -> Result<Vec<
         })
         .collect())
 }
+const BOOLEAN_PROPERTIES: &[&str] = &[
+    "hold-trigger-on-release",
+    "retro-tap",
+    "hold-while-undecided",
+    "hold-while-undecided-linger",
+    "slow-release",
+];
+
 fn prop(node: Option<&Node>, source: &str, name: &str, default: &str) -> String {
-    if name == "hold-trigger-on-release" {
+    if BOOLEAN_PROPERTIES.contains(&name) {
         return if node.is_some_and(|n| n.property(name).is_some()) {
             "Enabled"
         } else {
@@ -387,6 +404,18 @@ fn draft_with_kind(
             add("bindings", "Result binding", "&kp ESC", Kind::Binding);
             add("timeout-ms", "Timeout (ms)", "50", Kind::Number);
             add(
+                "require-prior-idle-ms",
+                "Require prior idle (ms)",
+                "0",
+                Kind::Number,
+            );
+            add(
+                "slow-release",
+                "Release when all trigger keys release",
+                "Disabled",
+                Kind::Choice(vec!["Enabled".into(), "Disabled".into()]),
+            );
+            add(
                 "layers",
                 "Active layers (empty means all)",
                 "",
@@ -401,15 +430,7 @@ fn draft_with_kind(
                 .unwrap_or("<&macro_tap &kp A>");
             let ts = tokens_groups(raw);
             for (i, raw) in ts.iter().enumerate() {
-                let (mode, bindings) = if let Some(v) = raw.strip_prefix("&macro_press ") {
-                    ("Press", v)
-                } else if let Some(v) = raw.strip_prefix("&macro_release ") {
-                    ("Release", v)
-                } else if let Some(v) = raw.strip_prefix("&macro_tap ") {
-                    ("Tap", v)
-                } else {
-                    ("Raw", raw.as_str())
-                };
+                let (mode, bindings) = ("Raw", raw.as_str());
                 fields.push(Field::new(
                     &format!("step-mode-{i}"),
                     "Action",
@@ -460,6 +481,24 @@ fn draft_with_kind(
                 );
                 add("tapping-term-ms", "Tapping term (ms)", "200", Kind::Number);
                 add("quick-tap-ms", "Quick tap (ms)", "175", Kind::Number);
+                add(
+                    "require-prior-idle-ms",
+                    "Require prior idle (ms)",
+                    "0",
+                    Kind::Number,
+                );
+                for (id, label) in [
+                    ("retro-tap", "Retro tap"),
+                    ("hold-while-undecided", "Hold while undecided"),
+                    ("hold-while-undecided-linger", "Keep hold while undecided"),
+                ] {
+                    add(
+                        id,
+                        label,
+                        "Disabled",
+                        Kind::Choice(vec!["Enabled".into(), "Disabled".into()]),
+                    );
+                }
                 add(
                     "hold-trigger-on-release",
                     "Hold trigger on release",
@@ -538,35 +577,13 @@ fn draft_with_kind(
                         .ok()
                         .and_then(|spans| spans.get(index).map(|s| v[s.clone()].to_owned()))
                 })
-                .unwrap_or_else(|| "&inc_dec_kp C_VOL_UP C_VOL_DN".into());
-            let parameters = binding.split_whitespace().collect::<Vec<_>>();
-            if let ["&inc_dec_kp", clockwise, counterclockwise] = parameters.as_slice() {
-                let mut choices = crate::supported_key_codes();
-                for value in [clockwise, counterclockwise] {
-                    if !choices.iter().any(|v| v == value) {
-                        choices.push(value.to_string());
-                    }
-                }
-                fields.push(Field::new(
-                    "encoder-clockwise",
-                    "Clockwise keycode",
-                    *clockwise,
-                    Kind::Choice(choices.clone()),
-                ));
-                fields.push(Field::new(
-                    "encoder-counterclockwise",
-                    "Counterclockwise keycode",
-                    *counterclockwise,
-                    Kind::Choice(choices),
-                ));
-            } else {
-                fields.push(Field::new(
-                    "sensor-binding",
-                    "Rotation binding (clockwise, counterclockwise)",
-                    binding,
-                    Kind::Binding,
-                ));
-            }
+                .unwrap_or_default();
+            fields.push(Field::new(
+                "sensor-binding",
+                "Rotation behavior",
+                binding,
+                Kind::Binding,
+            ));
         }
     }
     Ok(Draft {
@@ -579,22 +596,9 @@ fn draft_with_kind(
     })
 }
 fn tokens_groups(value: &str) -> Vec<String> {
-    let mut groups = vec![];
-    let mut start = None;
-    for (i, c) in value.char_indices() {
-        if c == '<' {
-            start = Some(i + 1);
-        } else if c == '>'
-            && let Some(start) = start.take()
-        {
-            groups.push(value[start..i].trim().into());
-        }
-    }
-    if groups.is_empty() && !value.trim().is_empty() {
-        groups.push(zmk::cells(value));
-    }
-    groups
+    zmk::cell_groups(value).unwrap_or_else(|_| vec![value.to_string()])
 }
+
 fn integers(value: &str, limit: usize) -> Result<Vec<usize>> {
     let numbers = value
         .split_whitespace()
@@ -629,7 +633,7 @@ pub fn apply(project: &Project, draft: &Draft) -> Result<Document> {
         if field.id == "name"
             || field.id == "behavior-type"
             || field.id.starts_with("step-")
-            || field.id.starts_with("encoder-")
+            || field.id == "sensor-binding"
         {
             continue;
         }
@@ -673,7 +677,15 @@ pub fn apply(project: &Project, draft: &Draft) -> Result<Document> {
                 }
             }
             Kind::Binding => {
-                zmk::binding(value)?;
+                let binding = zmk::binding(value)?;
+                let errors = crate::bindings::validate(
+                    &binding,
+                    &crate::bindings::catalog(Some(&doc)),
+                    project.keymap.layers.len(),
+                );
+                if !errors.is_empty() {
+                    return Err(Error::InvalidDocument(errors.join(". ")));
+                }
             }
             Kind::Bindings => {
                 if zmk::binding_spans(value)?.is_empty() {
@@ -689,7 +701,7 @@ pub fn apply(project: &Project, draft: &Draft) -> Result<Document> {
             }
             Kind::Text => {}
         }
-        if field.id == "hold-trigger-on-release" {
+        if BOOLEAN_PROPERTIES.contains(&field.id.as_str()) {
             properties.insert(
                 field.id.clone(),
                 if value == "Enabled" {
@@ -728,27 +740,70 @@ pub fn apply(project: &Project, draft: &Draft) -> Result<Document> {
             ));
         }
         let mut sequence = vec![];
+        let catalog = crate::bindings::macro_catalog(Some(&doc));
         for i in 0..count {
             let mode = draft.get(&format!("step-mode-{i}"));
             let value = draft.get(&format!("step-bindings-{i}")).trim();
-            if zmk::binding_spans(value)?.is_empty() {
+            let spans = zmk::binding_spans(value)?;
+            if spans.is_empty() {
                 return Err(Error::InvalidDocument(
                     "Each step needs at least one binding".into(),
                 ));
             }
-            let prefix = match mode {
-                "Tap" => "&macro_tap ",
-                "Press" => "&macro_press ",
-                "Release" => "&macro_release ",
-                "Raw" => "",
-                _ => return Err(Error::InvalidSelection),
-            };
-            sequence.push(format!("<{prefix}{value}>"));
+            if !["Tap", "Press", "Release", "Raw"].contains(&mode) {
+                return Err(Error::InvalidSelection);
+            }
+            // Validate edited groups without reinterpreting untouched imported
+            // sequences or module-defined controls.
+            if new
+                || draft.fields.iter().any(|field| {
+                    (field.id == format!("step-bindings-{i}")
+                        || field.id == format!("step-mode-{i}"))
+                        && field.changed()
+                })
+            {
+                for span in spans {
+                    let (reference, arguments) = crate::bindings::split(&value[span])?;
+                    let errors = crate::bindings::validate_form(
+                        &crate::bindings::Form {
+                            reference,
+                            arguments,
+                        },
+                        &catalog,
+                        project.keymap.layers.len(),
+                    );
+                    if !errors.is_empty() {
+                        return Err(Error::InvalidDocument(errors.join("; ")));
+                    }
+                }
+            }
+            sequence.push(format!("<{}>", draft.sequence_group(i)));
         }
         properties.insert(
             "bindings".into(),
             Some(sequence.join(",\n                ")),
         );
+    }
+    if draft.section == Section::Behaviors {
+        let kind = draft
+            .node
+            .as_ref()
+            .and_then(|path| {
+                doc.tree().ok().and_then(|tree| {
+                    tree.find(path)
+                        .and_then(|node| node.value(&doc.source, "compatible"))
+                        .map(zmk::unquote)
+                })
+            })
+            .unwrap_or_else(|| draft.get("behavior-type").to_string());
+        let children = zmk::binding_spans(draft.get("bindings")).unwrap_or_default();
+        if ["zmk,behavior-hold-tap", "zmk,behavior-mod-morph"].contains(&kind.as_str())
+            && children.len() != 2
+        {
+            return Err(Error::InvalidDocument(
+                "This behavior requires exactly two child behaviors".into(),
+            ));
+        }
     }
     if draft.section == Section::ConditionalLayers {
         let ifs = draft
@@ -784,21 +839,30 @@ pub fn apply(project: &Project, draft: &Draft) -> Result<Document> {
             .into_iter()
             .map(|span| raw[span].to_owned())
             .collect::<Vec<_>>();
-        while bindings.len() <= index {
-            bindings.push("&inc_dec_kp C_VOL_UP C_VOL_DN".into());
+        let value = draft.get("sensor-binding").trim();
+        zmk::binding(value)?;
+        let (reference, arguments) = crate::bindings::split(value)?;
+        let errors = crate::bindings::validate_form(
+            &crate::bindings::Form {
+                reference,
+                arguments,
+            },
+            &crate::bindings::sensor_catalog(Some(&doc)),
+            project.keymap.layers.len(),
+        );
+        if !errors.is_empty() {
+            return Err(Error::InvalidDocument(errors.join(". ")));
         }
-        bindings[index] = if draft.fields.iter().any(|f| f.id == "encoder-clockwise") {
-            let clockwise = draft.get("encoder-clockwise");
-            let counterclockwise = draft.get("encoder-counterclockwise");
-            if !crate::valid_key_code(clockwise) || !crate::valid_key_code(counterclockwise) {
-                return Err(Error::InvalidDocument(
-                    "Choose valid encoder keycodes".into(),
-                ));
-            }
-            format!("&inc_dec_kp {clockwise} {counterclockwise}")
+        if index > bindings.len() {
+            return Err(Error::InvalidDocument(
+                "Configure earlier sensor bindings on this layer first".into(),
+            ));
+        }
+        if index == bindings.len() {
+            bindings.push(value.to_string());
         } else {
-            draft.get("sensor-binding").trim().into()
-        };
+            bindings[index] = value.to_string();
+        }
         let mut values = BTreeMap::new();
         values.insert(
             "sensor-bindings".into(),

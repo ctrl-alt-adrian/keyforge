@@ -49,7 +49,8 @@ fn inspector_generates_and_validates_all_six_behaviors() {
     for (behavior, params, expected) in cases {
         let draft = BindingDraft {
             behavior,
-            parameters: params.map(str::to_string),
+            parameters: params.map(str::to_string).to_vec(),
+            reference: None,
         };
         assert_eq!(draft.preview(), expected);
         let issues = keyforge_core::validate_binding(

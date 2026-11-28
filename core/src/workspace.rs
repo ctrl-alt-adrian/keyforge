@@ -10,6 +10,7 @@ pub enum Pane {
 pub enum BottomTab {
     BuildOutput,
     Problems,
+    Artifacts,
     Changes,
 }
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -20,13 +21,14 @@ pub enum Appearance {
     Light,
 }
 impl BottomTab {
-    pub const ALL: [Self; 3] = [Self::BuildOutput, Self::Problems, Self::Changes];
+    pub const ALL: [Self; 3] = [Self::BuildOutput, Self::Problems, Self::Artifacts];
 }
 impl std::fmt::Display for BottomTab {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
             Self::BuildOutput => "Build Output",
             Self::Problems => "Problems",
+            Self::Artifacts => "Artifacts",
             Self::Changes => "Changes",
         })
     }
@@ -49,6 +51,8 @@ pub struct Preferences {
     pub appearance: Appearance,
     #[serde(default)]
     pub reduced_motion: bool,
+    #[serde(default)]
+    pub local_keymap_directory: Option<std::path::PathBuf>,
 }
 impl Default for Preferences {
     fn default() -> Self {
@@ -71,6 +75,7 @@ impl Default for Preferences {
             window_height: 900.,
             appearance: Appearance::System,
             reduced_motion: false,
+            local_keymap_directory: None,
         }
     }
 }
@@ -90,6 +95,9 @@ impl Preferences {
         }
     }
     pub fn sanitize(&mut self) {
+        if self.bottom_tab == BottomTab::Changes {
+            self.bottom_tab = BottomTab::Artifacts;
+        }
         for p in [Pane::Left, Pane::Right, Pane::Bottom] {
             let v = self.pane_mut(p);
             let (min, max) = limits(p);
@@ -183,6 +191,7 @@ impl Workspace {
             window_height,
             appearance: self.preferences.appearance,
             reduced_motion: self.preferences.reduced_motion,
+            local_keymap_directory: self.preferences.local_keymap_directory.clone(),
             ..Preferences::default()
         };
         self.focus_mode = false;

@@ -28,19 +28,17 @@ impl Keyforge {
                 self.button(
                     format!("output-{tab:?}"),
                     match tab {
-                        BottomTab::BuildOutput => {
-                            if compact { "Build" } else { "Build output" }.into()
-                        }
+                        BottomTab::BuildOutput => "Output".into(),
                         BottomTab::Problems => {
                             format!("Problems ({})", self.core.problem_count())
                         }
-                        BottomTab::Changes => {
-                            if compact {
-                                "Changes".into()
-                            } else {
-                                format!("Changes ({})", self.core.pending_count())
-                            }
-                        }
+                        BottomTab::Changes | BottomTab::Artifacts => format!(
+                            "Artifacts ({})",
+                            self.core
+                                .artifact_history
+                                .last()
+                                .map_or(0, |set| set.artifacts.len())
+                        ),
                     },
                     Command::SelectBottomTab(tab),
                     cx,
@@ -100,8 +98,10 @@ impl Keyforge {
                             })
                             .child(gpui_component::Icon::new(IconName::TriangleAlert))
                             .child(div().min_w_0().child(format!(
-                                "{:?} · Build · {}",
-                                problem.severity, problem.message
+                                "{:?} · {} · {}",
+                                problem.severity,
+                                problem.target.as_deref().unwrap_or("Build"),
+                                problem.message
                             ))),
                     );
                 }
@@ -126,26 +126,104 @@ impl Keyforge {
                     );
                 }
             }
-            BottomTab::Changes => {
-                let changes = self.core.changes();
-                if self.core.has_changes() && changes.is_empty() {
-                    body = body.child("Configuration definitions have pending changes.");
+            BottomTab::Changes | BottomTab::Artifacts => {
+                if self.core.artifact_history.is_empty() {
+                    body = body.child("Firmware artifacts appear after a successful local build.");
                 }
-                if changes.is_empty() && !self.core.has_changes() {
-                    body = body.child("No pending changes.");
-                }
-                for change in changes {
-                    body = body.child(
-                        div()
-                            .font_family(cx.theme().mono_font_family.clone())
-                            .child(format!(
-                                "{} / {}   {} → {}",
-                                self.core.project.keymap.layers[change.layer.0].name,
-                                change.key.0,
-                                change.before.zmk(),
-                                change.after.zmk()
-                            )),
-                    );
+                for set in self.core.artifact_history.iter().rev() {
+                    let current = set.build == self.core.build.id
+                        && self.core.build.status == keyforge_core::BuildStatus::Successful;
+                    body = body.child(caption(
+                        format!(
+                            "{} · Build {} · {}",
+                            if current {
+                                "Latest successful build"
+                            } else {
+                                "Previous successful build"
+                            },
+                            set.build,
+                            set.configuration
+                        ),
+                        cx,
+                    ));
+                    for artifact in &set.artifacts {
+                        let build = set.build;
+                        let name = artifact.name.clone();
+                        let directory = set.directory.clone();
+                        body = body.child(
+                            div()
+                                .flex()
+                                .items_center()
+                                .gap_3()
+                                .py_2()
+                                .flex_shrink_0()
+                                .child(
+                                    div()
+                                        .flex_1()
+                                        .min_w_0()
+                                        .flex()
+                                        .flex_col()
+                                        .gap_1()
+                                        .child(
+                                            div().text_size(px(13.)).child(artifact.name.clone()),
+                                        )
+                                        .child(
+                                            div()
+                                                .text_size(px(11.))
+                                                .text_color(cx.theme().muted_foreground)
+                                                .child(format!(
+                                                    "{} bytes{}{}",
+                                                    artifact.bytes,
+                                                    artifact
+                                                        .target
+                                                        .as_ref()
+                                                        .map(|target| format!(" · Target {target}"))
+                                                        .unwrap_or_default(),
+                                                    if artifact.simulated {
+                                                        " · Simulated"
+                                                    } else {
+                                                        ""
+                                                    }
+                                                )),
+                                        ),
+                                )
+                                .child(
+                                    Button::new(SharedString::from(format!(
+                                        "export-{build}-{name}"
+                                    )))
+                                    .label("Export")
+                                    .icon(IconName::ArrowDown)
+                                    .disabled(
+                                        artifact.simulated
+                                            || directory.is_none()
+                                            || self.core.connection.busy,
+                                    )
+                                    .on_click(cx.listener(move |this, _, window, cx| {
+                                        this.browse_path(
+                                            crate::editor_controls::PathAction::ExportArtifact {
+                                                build,
+                                                name: name.clone(),
+                                            },
+                                            window,
+                                            cx,
+                                        )
+                                    })),
+                                ),
+                        );
+                    }
+                    if let Some(directory) = &set.directory {
+                        let directory = directory.clone();
+                        body = body.child(
+                            Button::new(SharedString::from(format!(
+                                "open-artifacts-{}",
+                                set.build
+                            )))
+                            .ghost()
+                            .label("Open firmware folder")
+                            .icon(IconName::FolderOpen)
+                            .on_click(move |_, _, cx| cx.reveal_path(&directory)),
+                        );
+                    }
                 }
             }
         }
@@ -164,16 +242,10 @@ impl Keyforge {
     fn build_output_row(&self, index: usize, compact: bool, cx: &mut Context<Self>) -> Div {
         if index == 0 {
             return div().flex().items_center().gap_4().child(caption(
-                if compact || self.core.project.zmk.is_none() {
-                    "BUILD OUTPUT"
+                if compact {
+                    "OUTPUT"
                 } else {
-                    if self.core.project.zmk.as_ref().is_some_and(|d| {
-                        matches!(d.origin, keyforge_core::zmk::Origin::GitHub { .. })
-                    }) {
-                        "REPOSITORY FIRMWARE WORKFLOW"
-                    } else {
-                        "LOCAL FIRMWARE BUILD"
-                    }
+                    "LOCAL · CONTAINER BUILD"
                 },
                 cx,
             ));
@@ -194,47 +266,6 @@ impl Keyforge {
                 .child(line.clone());
         }
         let mut footer = div().w_full().flex().flex_col().gap_2().py_2();
-        for artifact in &self.core.build.artifacts {
-            footer = footer.child(
-                div()
-                    .text_color(cx.theme().success_foreground)
-                    .child(format!("{} · {} bytes", artifact.name, artifact.bytes)),
-            );
-        }
-        if let Some(directory) = &self.core.local_firmware {
-            let directory = directory.clone();
-            footer = footer.child(
-                Button::new("open-local-firmware")
-                    .label("Open firmware folder")
-                    .icon(IconName::FolderOpen)
-                    .on_click(move |_, _, cx| cx.reveal_path(&directory)),
-            );
-        }
-        if let Some(run) = &self.core.workflow_run {
-            let url = run.url.clone();
-            footer = footer.child(
-                Button::new("open-workflow")
-                    .ghost()
-                    .label("View workflow on GitHub")
-                    .icon(IconName::ExternalLink)
-                    .on_click(move |_, _, cx| cx.open_url(&url)),
-            );
-            if !self.core.build.artifacts.is_empty() {
-                footer = footer.child(
-                    Button::new("download-firmware")
-                        .label("Download firmware artifacts…")
-                        .icon(IconName::ArrowDown)
-                        .disabled(self.core.connection.busy)
-                        .on_click(cx.listener(|this, _, window, cx| {
-                            this.browse_path(
-                                crate::editor_controls::PathAction::Download,
-                                window,
-                                cx,
-                            )
-                        })),
-                );
-            }
-        }
         let setting_up = matches!(
             self.core.build_environment,
             keyforge_core::build_environment::State::Installing { .. }
@@ -248,12 +279,6 @@ impl Keyforge {
             footer = footer.child(div().flex().items_center().gap_2().child(indicator).child(
                 if setting_up {
                     "Setting up local builds…"
-                } else if self.core.workflow_run.is_some()
-                    || self.core.project.zmk.as_ref().is_some_and(|d| {
-                        matches!(d.origin, keyforge_core::zmk::Origin::GitHub { .. })
-                    })
-                {
-                    "GitHub workflow in progress…"
                 } else {
                     "Local firmware build in progress…"
                 },

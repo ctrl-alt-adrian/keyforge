@@ -3,9 +3,7 @@ use crate::{
     components::{build_status, caption},
 };
 use gpui::{prelude::*, *};
-use gpui_component::{
-    ActiveTheme, Disableable, WindowExt, button::Button, dialog::DialogButtonProps,
-};
+use gpui_component::{ActiveTheme, Disableable, WindowExt, button::Button};
 use keyforge_core::{BuildStatus, Command, build_environment::State};
 
 impl Keyforge {
@@ -87,41 +85,36 @@ impl Keyforge {
         window.open_dialog(cx, move |dialog, _, cx| {
             let confirm_view = confirm_view.clone();
             let cancel_view = cancel_view.clone();
-            dialog
-                .title(title)
-                .w(px(560.))
-                .confirm()
-                .bg(cx.theme().popover)
-                .child(
-                    div()
-                        .text_size(px(13.))
-                        .whitespace_normal()
-                        .child(detail.clone()),
-                )
-                .button_props(
-                    DialogButtonProps::default()
-                        .ok_text(confirm)
-                        .cancel_text("Continue editing"),
-                )
-                .on_ok(move |_, window, cx| {
-                    let _ = confirm_view.update(cx, |this, cx| match action {
-                        0 => this.command(Command::PrepareBuildEnvironment, window, cx),
-                        1 => this.command(Command::CheckBuildEnvironment, window, cx),
-                        _ => {
-                            cx.open_url(
-                                "https://zmk.dev/docs/development/local-toolchain/setup/container",
-                            );
-                            this.command(Command::DismissBuildSetup, window, cx);
-                        }
-                    });
-                    true
-                })
-                .on_cancel(move |_, window, cx| {
-                    let _ = cancel_view.update(cx, |this, cx| {
-                        this.command(Command::DismissBuildSetup, window, cx)
-                    });
-                    true
-                })
+            crate::components::confirmation(
+                dialog,
+                crate::components::Confirmation {
+                    title,
+                    detail: &detail,
+                    confirm,
+                    cancel: "Continue editing",
+                    destructive: false,
+                },
+                cx,
+            )
+            .on_ok(move |_, window, cx| {
+                let _ = confirm_view.update(cx, |this, cx| match action {
+                    0 => this.command(Command::PrepareBuildEnvironment, window, cx),
+                    1 => this.command(Command::CheckBuildEnvironment, window, cx),
+                    _ => {
+                        cx.open_url(
+                            "https://zmk.dev/docs/development/local-toolchain/setup/container",
+                        );
+                        this.command(Command::DismissBuildSetup, window, cx);
+                    }
+                });
+                true
+            })
+            .on_cancel(move |_, window, cx| {
+                let _ = cancel_view.update(cx, |this, cx| {
+                    this.command(Command::DismissBuildSetup, window, cx)
+                });
+                true
+            })
         });
     }
 }

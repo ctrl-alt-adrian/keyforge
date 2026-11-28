@@ -22,13 +22,7 @@ pub fn view(app: &Keyforge, cx: &mut Context<Keyforge>) -> AnyElement {
         .map(|d| d.positions())
         .unwrap_or_default();
     let hovered = app.hovered;
-    let behaviors = app
-        .core
-        .project
-        .zmk
-        .as_ref()
-        .and_then(|doc| doc.hold_tap_behaviors().ok())
-        .unwrap_or_default();
+    let behaviors = &app.hold_tap_behaviors;
     let bindings: Vec<_> = keyboard
         .keys
         .iter()
@@ -38,7 +32,7 @@ pub fn view(app: &Keyforge, cx: &mut Context<Keyforge>) -> AnyElement {
                 .binding(app.core.active_layer, key.position)
                 .cloned()
                 .expect("Validated key binding");
-            let label = keycap::for_binding(&binding, &layers, &behaviors);
+            let label = keycap::for_binding(&binding, &layers, behaviors);
             (
                 binding,
                 app.core.modified(app.core.active_layer, key.position),

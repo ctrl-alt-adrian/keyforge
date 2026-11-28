@@ -54,6 +54,21 @@ impl std::fmt::Display for Destination {
 }
 #[derive(Debug, Clone)]
 pub enum Command {
+    ExportArtifact {
+        build: u64,
+        name: String,
+        directory: std::path::PathBuf,
+    },
+    EditBinding {
+        target: crate::editing::BindingTarget,
+        edit: crate::editing::BindingEdit,
+    },
+    DiscardBindingDraft,
+    OpenDefinition(String),
+    ToggleEditorLayer {
+        field: String,
+        layer: LayerId,
+    },
     CheckBuildEnvironment,
     PrepareBuildEnvironment,
     DismissBuildSetup,
@@ -62,6 +77,11 @@ pub enum Command {
     FindConfigurations,
     BrowseRepository,
     BrowseBranch(String),
+    InsertMacroStep(usize),
+    SetMacroExpression {
+        index: usize,
+        source: String,
+    },
     SetConnection {
         field: String,
         value: String,
@@ -107,6 +127,20 @@ pub enum Command {
         dy: f32,
     },
     SetBehavior(Behavior),
+    SetBindingBehavior(String),
+    SetBindingArgument {
+        index: usize,
+        value: String,
+    },
+    ChooseBindingArgument {
+        index: usize,
+        value: String,
+    },
+    ToggleBindingModifier {
+        index: usize,
+        modifier: String,
+    },
+    SetRawBinding(String),
     SetParameter {
         index: usize,
         value: String,
@@ -124,6 +158,7 @@ pub enum Command {
     SaveAndBuild,
     SetAppearance(Appearance),
     SetReducedMotion(bool),
+    SetLocalKeymapDirectory(Option<std::path::PathBuf>),
     StartBuild {
         fail: bool,
     },
@@ -156,6 +191,7 @@ pub struct LayerNameDraft {
 }
 
 pub struct Application {
+    pub(crate) nested_draft: Option<crate::editing::NestedDraft>,
     pub project: Project,
     pub original: Keymap,
     pub active_layer: LayerId,
@@ -166,6 +202,7 @@ pub struct Application {
     pub workspace: Workspace,
     pub destination: Destination,
     pub build: Build,
+    pub artifact_history: Vec<ArtifactSet>,
     pub build_environment: crate::build_environment::State,
     pub(crate) environment_generation: u64,
     pub(crate) resume_local_build: bool,
@@ -194,6 +231,7 @@ impl Application {
         project.check_structure()?;
         let original = project.keymap.clone();
         let mut app = Self {
+            nested_draft: None,
             saved_project: project.clone(),
             connection: crate::github::Connection::default(),
             editor: None,
@@ -211,6 +249,7 @@ impl Application {
             workspace: Workspace::default(),
             destination: Destination::Keymap,
             build: Build::default(),
+            artifact_history: Vec::new(),
             build_environment: Default::default(),
             environment_generation: 0,
             resume_local_build: false,
@@ -252,6 +291,25 @@ impl Application {
     pub(crate) fn reset_draft(&mut self) {
         self.draft = self.selected_binding().map(BindingDraft::from);
     }
+    pub fn binding_form(&self) -> Option<crate::bindings::Form> {
+        self.draft.as_ref().map(|draft| {
+            if let Some(reference) = &draft.reference {
+                crate::bindings::Form {
+                    reference: reference.clone(),
+                    arguments: draft.parameters.clone(),
+                }
+            } else {
+                let (reference, arguments) = crate::bindings::editing_parts(&draft.source());
+                crate::bindings::Form {
+                    reference,
+                    arguments,
+                }
+            }
+        })
+    }
+    fn set_binding_form(&mut self, form: crate::bindings::Form) {
+        self.draft = Some(crate::bindings::draft(&form.reference, &form.arguments));
+    }
     pub fn can_undo(&self) -> bool {
         !self.undo.is_empty()
     }
@@ -289,7 +347,24 @@ impl Application {
         match (&self.draft, self.selected_key) {
             (Some(d), Some(key)) => match d.binding() {
                 Ok(b) => {
-                    validate_binding(&b, self.active_layer, key, self.project.keymap.layers.len())
+                    let mut issues = self.binding_issues(&b, self.active_layer, key);
+                    if let Some(form) = self.binding_form() {
+                        issues.extend(
+                            crate::bindings::validate_form(
+                                &form,
+                                &crate::bindings::catalog(self.project.zmk.as_ref()),
+                                self.project.keymap.layers.len(),
+                            )
+                            .into_iter()
+                            .map(|message| Diagnostic {
+                                severity: Severity::Error,
+                                message,
+                                layer: self.active_layer,
+                                key,
+                            }),
+                        );
+                    }
+                    issues
                 }
                 Err(e) => vec![Diagnostic {
                     severity: Severity::Error,
@@ -303,18 +378,38 @@ impl Application {
     }
     pub(crate) fn validate(&mut self) {
         self.diagnostics.clear();
-        let count = self.project.keymap.layers.len();
         for (layer_index, layer) in self.project.keymap.layers.iter().enumerate() {
             for (key_index, binding) in layer.bindings.iter().enumerate() {
+                let issues =
+                    self.binding_issues(binding, LayerId(layer_index), KeyPosition(key_index));
                 self.diagnostics.extend(
-                    validate_binding(binding, LayerId(layer_index), KeyPosition(key_index), count)
-                        .into_iter()
-                        .filter(|_| {
-                            self.project.zmk.is_none() || !matches!(binding, Binding::None)
-                        }),
+                    issues.into_iter().filter(|_| {
+                        self.project.zmk.is_none() || !matches!(binding, Binding::None)
+                    }),
                 );
             }
         }
+    }
+    fn binding_issues(
+        &self,
+        binding: &Binding,
+        layer: LayerId,
+        key: KeyPosition,
+    ) -> Vec<Diagnostic> {
+        let mut issues = validate_binding(binding, layer, key, self.project.keymap.layers.len());
+        if self.project.zmk.is_some() {
+            for issue in &mut issues {
+                if issue.message.starts_with("Unknown key code:")
+                    || issue.message.starts_with("Unknown tap key:")
+                {
+                    issue.severity = Severity::Warning;
+                    issue
+                        .message
+                        .push_str(". This value must be defined by your firmware headers.");
+                }
+            }
+        }
+        issues
     }
     fn replace(&mut self, layer: LayerId, key: KeyPosition, binding: Binding) -> Result<()> {
         let mut source = self.project.zmk.clone();
@@ -335,6 +430,46 @@ impl Application {
         Ok(())
     }
     pub fn dispatch(&mut self, command: Command) -> Result<()> {
+        let pending_binding = self.project.zmk.is_some()
+            && self
+                .draft
+                .as_ref()
+                .zip(self.selected_binding())
+                .is_some_and(|(draft, binding)| draft.binding().as_ref().ok() != Some(binding));
+        let pending_nested_binding = self.nested_draft_invalid();
+        let changes_selection = match &command {
+            Command::SelectKey(key) => *key != self.selected_key,
+            Command::SelectLayer(layer) => *layer != self.active_layer,
+            Command::NavigateKey { .. } | Command::RevealDiagnostic { .. } => true,
+            Command::Navigate(destination) => {
+                !matches!(destination, Destination::Settings | Destination::Repository)
+                    && if pending_nested_binding {
+                        self.editor.as_ref().is_none_or(|draft| {
+                            crate::live::section(*destination) != Some(draft.section)
+                        })
+                    } else {
+                        *destination != Destination::Keymap
+                    }
+            }
+            Command::Undo | Command::Redo | Command::NewDefinition | Command::OpenDefinition(_) => {
+                true
+            }
+            _ => false,
+        };
+        if (pending_binding || pending_nested_binding) && changes_selection {
+            return Err(Error::InvalidDocument(
+                "Finish or discard the invalid draft before changing selection".into(),
+            ));
+        }
+        if matches!(command, Command::Undo | Command::Redo)
+            && self.project.zmk.is_some()
+            && self.editor.as_ref().is_some_and(|draft| draft.dirty())
+        {
+            return Err(Error::InvalidDocument(
+                "Finish or discard the invalid definition draft before undo or redo".into(),
+            ));
+        }
+        let choose_argument = matches!(command, Command::ChooseBindingArgument { .. });
         let preference_change = matches!(
             command,
             Command::TogglePane(_)
@@ -345,11 +480,51 @@ impl Application {
                 | Command::WindowResized { .. }
                 | Command::SetAppearance(_)
                 | Command::SetReducedMotion(_)
+                | Command::SetLocalKeymapDirectory(_)
         );
         if self.dispatch_live(&command)? {
             return Ok(());
         }
         match command {
+            Command::EditBinding { target, edit } => return self.edit_assignment(target, edit),
+            Command::DiscardBindingDraft => {
+                self.nested_draft = None;
+                self.reset_draft();
+            }
+            Command::OpenDefinition(reference) => {
+                let preview = self
+                    .project
+                    .zmk
+                    .as_ref()
+                    .and_then(|doc| crate::bindings::definition_preview(doc, &reference))
+                    .ok_or(Error::InvalidSelection)?;
+                let destination = if preview.section == crate::editor::Section::Macros {
+                    Destination::Macros
+                } else {
+                    Destination::Behaviors
+                };
+                self.dispatch(Command::Navigate(destination))?;
+                return self.dispatch(Command::SelectEditor(preview.path));
+            }
+            Command::ToggleEditorLayer { field, layer } => {
+                if layer.0 >= self.project.keymap.layers.len() {
+                    return Err(Error::InvalidSelection);
+                }
+                let editor = self.editor.as_mut().ok_or(Error::InvalidSelection)?;
+                let mut layers = editor
+                    .get(&field)
+                    .split_whitespace()
+                    .map(str::to_string)
+                    .collect::<Vec<_>>();
+                let value = layer.0.to_string();
+                if layers.contains(&value) {
+                    layers.retain(|l| l != &value);
+                } else {
+                    layers.push(value);
+                }
+                editor.set(&field, layers.join(" "))?;
+                self.stage_definition();
+            }
             Command::OpenSample => {
                 self.epoch += 1;
                 self.project = services::sample_project()?;
@@ -380,7 +555,7 @@ impl Application {
                     .is_some_and(|d| d.section == crate::editor::Section::Encoders && d.dirty())
                 {
                     return Err(Error::InvalidDocument(
-                        "Apply or revert this encoder draft before changing layers".into(),
+                        "Complete or discard this encoder draft before changing layers".into(),
                     ));
                 }
                 if layer.0 >= self.project.keymap.layers.len() {
@@ -397,6 +572,9 @@ impl Application {
                 }
             }
             Command::SelectKey(key) => {
+                if key == self.selected_key && pending_binding {
+                    return Ok(());
+                }
                 if key.is_some_and(|k| k.0 >= self.project.keyboard.keys.len()) {
                     return Err(Error::InvalidSelection);
                 }
@@ -416,6 +594,112 @@ impl Application {
                     .as_mut()
                     .ok_or(Error::InvalidSelection)?
                     .change_behavior(behavior);
+            }
+            Command::SetBindingBehavior(reference) => {
+                let catalog = crate::bindings::catalog(self.project.zmk.as_ref());
+                let spec = catalog
+                    .iter()
+                    .find(|s| s.reference == reference)
+                    .ok_or(Error::InvalidSelection)?;
+                let mut arguments = spec
+                    .parameters
+                    .iter()
+                    .map(|p| p.default.clone())
+                    .collect::<Vec<_>>();
+                if let Some(current) = self.binding_form()
+                    && let Some(previous) =
+                        catalog.iter().find(|s| s.reference == current.reference)
+                    && let Some(index) = previous
+                        .fields(&current.arguments)
+                        .iter()
+                        .rposition(|p| p.kind == crate::bindings::ParameterKind::KeyCode)
+                    && let Some(value) = current.arguments.get(index)
+                    && let Some(index) = spec
+                        .parameters
+                        .iter()
+                        .rposition(|p| p.kind == crate::bindings::ParameterKind::KeyCode)
+                {
+                    arguments[index] = value.clone();
+                }
+                let arguments = arguments[..spec.fields(&arguments).len()].to_vec();
+                self.set_binding_form(crate::bindings::Form {
+                    reference,
+                    arguments,
+                });
+            }
+            Command::SetRawBinding(value) => {
+                let draft = self.draft.as_mut().ok_or(Error::InvalidSelection)?;
+                draft.behavior = Behavior::Custom;
+                draft.reference = None;
+                draft.parameters = vec![value, String::new()];
+            }
+            Command::SetBindingArgument { index, value }
+            | Command::ChooseBindingArgument { index, value } => {
+                let crate::bindings::Form {
+                    reference,
+                    mut arguments,
+                } = self.binding_form().ok_or(Error::InvalidSelection)?;
+                let catalog = crate::bindings::catalog(self.project.zmk.as_ref());
+                let spec = catalog
+                    .iter()
+                    .find(|s| s.reference == reference)
+                    .ok_or(Error::InvalidSelection)?;
+                let fields = spec.fields(&arguments);
+                let field = fields.get(index).ok_or(Error::InvalidSelection)?;
+                arguments.resize(fields.len(), String::new());
+                arguments[index] =
+                    if choose_argument && field.kind == crate::bindings::ParameterKind::KeyCode {
+                        crate::bindings::with_modifiers(
+                            &value,
+                            &crate::bindings::modifiers(&arguments[index]).1,
+                        )
+                    } else {
+                        value
+                    };
+                let fields = spec.fields(&arguments);
+                arguments.truncate(fields.len());
+                while arguments.len() < fields.len() {
+                    arguments.push(fields[arguments.len()].default.clone());
+                }
+                self.set_binding_form(crate::bindings::Form {
+                    reference,
+                    arguments,
+                });
+            }
+            Command::ToggleBindingModifier { index, modifier } => {
+                if !crate::bindings::MODIFIER_FUNCTIONS
+                    .iter()
+                    .any(|(function, _)| *function == modifier)
+                {
+                    return Err(Error::InvalidSelection);
+                }
+                let crate::bindings::Form {
+                    reference,
+                    arguments,
+                } = self.binding_form().ok_or(Error::InvalidSelection)?;
+                let spec = crate::bindings::catalog(self.project.zmk.as_ref())
+                    .into_iter()
+                    .find(|s| s.reference == reference)
+                    .ok_or(Error::InvalidSelection)?;
+                if !spec
+                    .fields(&arguments)
+                    .get(index)
+                    .is_some_and(|p| p.kind == crate::bindings::ParameterKind::KeyCode)
+                {
+                    return Err(Error::InvalidSelection);
+                }
+                let (code, mut modifiers) = crate::bindings::modifiers(
+                    arguments.get(index).map(String::as_str).unwrap_or("A"),
+                );
+                if modifiers.contains(&modifier) {
+                    modifiers.retain(|m| m != &modifier);
+                } else {
+                    modifiers.push(modifier);
+                }
+                return self.dispatch(Command::SetBindingArgument {
+                    index,
+                    value: crate::bindings::with_modifiers(&code, &modifiers),
+                });
             }
             Command::SetParameter { index, value } => {
                 let field = self
@@ -509,6 +793,7 @@ impl Application {
                     output: vec!["SIMULATED build queued · no real firmware is compiled".into()],
                     artifacts: vec![],
                     problems: vec![],
+                    current_target: None,
                 };
                 self.clock = Some(BuildClock::new(self.next_build, fail));
                 self.workspace.preferences.bottom_tab = BottomTab::BuildOutput;
@@ -545,7 +830,7 @@ impl Application {
                 }) && !matches!(destination, Destination::Settings | Destination::Repository)
                 {
                     return Err(Error::InvalidDocument(
-                        "Apply or revert the definition draft before changing workspaces".into(),
+                        "Complete or discard the invalid definition draft before changing workspaces".into(),
                     ));
                 }
                 self.destination = destination;
@@ -556,6 +841,15 @@ impl Application {
             }
             Command::SetReducedMotion(reduced) => {
                 self.workspace.preferences.reduced_motion = reduced
+            }
+            Command::SetLocalKeymapDirectory(directory) => {
+                let directory = directory.map(|path| path.canonicalize()).transpose()?;
+                if directory.as_ref().is_some_and(|path| !path.is_dir()) {
+                    return Err(Error::InvalidDocument(
+                        "Choose a folder for local keymaps".into(),
+                    ));
+                }
+                self.workspace.preferences.local_keymap_directory = directory;
             }
             _ => return Err(Error::InvalidSelection),
         }
@@ -641,12 +935,27 @@ impl Application {
         {
             self.build.problems.push(BuildProblem {
                 severity: Severity::Error,
-                message: "Firmware build failed. See Build output for details.".into(),
+                message: "Firmware build failed. See Output for details.".into(),
+                target: self.build.current_target.clone(),
             });
         }
         self.build.artifacts = event.artifacts;
         if !self.build.status.active() {
             self.clock = None;
+        }
+        if self.build.status == BuildStatus::Successful && !self.build.artifacts.is_empty() {
+            let set = ArtifactSet {
+                build: self.build.id,
+                configuration: self.project.name.clone(),
+                directory: self.local_firmware.clone(),
+                artifacts: self.build.artifacts.clone(),
+            };
+            self.artifact_history
+                .retain(|previous| previous.build != set.build);
+            self.artifact_history.push(set);
+            if self.artifact_history.len() > 5 {
+                self.artifact_history.remove(0);
+            }
         }
     }
     pub fn persist_preferences(&mut self) -> Result<()> {
@@ -659,6 +968,12 @@ impl Application {
     }
     pub(crate) fn record_build_output(&mut self, output: String) {
         for line in output.lines() {
+            if let Some(target) = line
+                .strip_prefix("Building target ")
+                .and_then(|line| line.split_once(": ").map(|(_, target)| target))
+            {
+                self.build.current_target = Some(target.trim().to_string());
+            }
             let message = line.trim();
             if message.starts_with("Traceback (") {
                 continue;
@@ -675,6 +990,7 @@ impl Application {
                 self.build.problems.push(BuildProblem {
                     severity,
                     message: message.into(),
+                    target: self.build.current_target.clone(),
                 });
             }
         }
@@ -762,6 +1078,8 @@ impl Application {
         }
     }
     pub(crate) fn restore_project(&mut self, mut project: Project) {
+        self.layer_name_draft = None;
+        self.nested_draft = None;
         if let (Some(current), Some(restored)) = (&self.project.zmk, &mut project.zmk) {
             restored.origin = current.origin.clone();
         }

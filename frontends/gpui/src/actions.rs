@@ -24,11 +24,17 @@ actions!(
         OpenMacros,
         OpenBehaviors,
         OpenConditionalLayers,
-        OpenEncoders
+        OpenEncoders,
+        CloseConfirmationEnter
     ]
 );
 
 pub fn register(cx: &mut App) {
+    cx.bind_keys([KeyBinding::new(
+        "enter",
+        CloseConfirmationEnter,
+        Some("KeyforgeCloseConfirmation"),
+    )]);
     let primary = if cfg!(target_os = "macos") {
         "cmd"
     } else {

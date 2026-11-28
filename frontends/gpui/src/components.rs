@@ -1,6 +1,209 @@
 use gpui::{prelude::*, *};
-use gpui_component::ActiveTheme;
+use gpui_component::{
+    ActiveTheme,
+    button::{Button, ButtonVariant, ButtonVariants},
+};
 use keyforge_core::{Binding, BuildStatus};
+
+#[derive(IntoElement)]
+pub struct ExpandableActionRow {
+    button: Button,
+    trigger: SharedString,
+    value: SharedString,
+    expanded: bool,
+}
+impl ExpandableActionRow {
+    pub fn on_click(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.button = self.button.on_click(handler);
+        self
+    }
+}
+impl RenderOnce for ExpandableActionRow {
+    fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
+        div()
+            .relative()
+            .w_full()
+            .min_w_0()
+            .h(px(64.))
+            .flex_shrink_0()
+            .child(self.button.absolute().top_0().left_0().w_full().h_full())
+            .child(
+                div()
+                    .absolute()
+                    .left(px(12.))
+                    .right(px(12.))
+                    .top(px(8.))
+                    .bottom(px(8.))
+                    .min_w_0()
+                    .flex()
+                    .items_center()
+                    .gap_2()
+                    .child(
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .flex()
+                            .flex_col()
+                            .gap_1()
+                            .child(
+                                div()
+                                    .text_size(px(11.))
+                                    .text_color(cx.theme().muted_foreground)
+                                    .child(self.trigger),
+                            )
+                            .child(
+                                div()
+                                    .text_size(px(14.))
+                                    .text_color(cx.theme().foreground)
+                                    .truncate()
+                                    .child(self.value),
+                            ),
+                    )
+                    .child(
+                        gpui_component::Icon::new(if self.expanded {
+                            gpui_component::IconName::ChevronUp
+                        } else {
+                            gpui_component::IconName::ChevronDown
+                        })
+                        .flex_shrink_0(),
+                    ),
+            )
+    }
+}
+pub fn action_row(
+    id: impl Into<SharedString>,
+    trigger: impl Into<SharedString>,
+    value: impl Into<SharedString>,
+    expanded: bool,
+    cx: &App,
+) -> ExpandableActionRow {
+    let value = value.into();
+    let button = Button::new(id.into())
+        .with_variant(ButtonVariant::Secondary)
+        .w_full()
+        .h(px(64.))
+        .border_1()
+        .border_color(if expanded {
+            cx.theme().primary
+        } else {
+            cx.theme().border
+        })
+        .when(value.len() > 32, |button| button.tooltip(value.clone()));
+    ExpandableActionRow {
+        button,
+        trigger: trigger.into(),
+        value,
+        expanded,
+    }
+}
+pub fn disclosure(
+    id: impl Into<SharedString>,
+    title: impl Into<SharedString>,
+    expanded: bool,
+) -> Button {
+    Button::new(id.into())
+        .ghost()
+        .label(title)
+        .h(px(36.))
+        .w_full()
+        .justify_start()
+        .icon(if expanded {
+            gpui_component::IconName::ChevronUp
+        } else {
+            gpui_component::IconName::ChevronDown
+        })
+}
+pub fn validation_message(message: impl Into<SharedString>, cx: &App) -> Div {
+    div()
+        .text_size(px(12.))
+        .text_color(cx.theme().danger_foreground)
+        .child(message.into())
+}
+
+pub struct Confirmation<'a> {
+    pub title: &'a str,
+    pub detail: &'a str,
+    pub confirm: &'a str,
+    pub cancel: &'a str,
+    pub destructive: bool,
+}
+/// The same themed, in-window confirmation surface for lifecycle safeguards.
+pub fn confirmation(
+    dialog: gpui_component::dialog::Dialog,
+    options: Confirmation<'_>,
+    cx: &App,
+) -> gpui_component::dialog::Dialog {
+    use gpui_component::dialog::DialogButtonProps;
+    dialog
+        .confirm()
+        .w(px(480.))
+        .bg(cx.theme().popover)
+        .text_color(cx.theme().foreground)
+        .border_1()
+        .border_color(cx.theme().border)
+        .rounded(px(6.))
+        .title(
+            div()
+                .text_size(px(19.))
+                .font_weight(FontWeight::SEMIBOLD)
+                .child(options.title.to_string()),
+        )
+        .child(
+            div()
+                .w_full()
+                .text_size(px(13.))
+                .whitespace_normal()
+                .text_color(cx.theme().muted_foreground)
+                .child(options.detail.to_string()),
+        )
+        .button_props(
+            DialogButtonProps::default()
+                .ok_text(options.confirm.to_string())
+                .cancel_text(options.cancel.to_string())
+                .ok_variant(if options.destructive {
+                    ButtonVariant::Danger
+                } else {
+                    ButtonVariant::Primary
+                })
+                .cancel_variant(ButtonVariant::Secondary),
+        )
+}
+
+/// A primary and secondary action with equal widths and a shared button size.
+/// Callers provide labels, availability and handlers; layout stays consistent.
+#[derive(IntoElement)]
+pub struct ActionRow {
+    primary: Button,
+    secondary: Button,
+}
+impl ActionRow {
+    pub fn new(primary: Button, secondary: Button) -> Self {
+        Self { primary, secondary }
+    }
+}
+impl RenderOnce for ActionRow {
+    fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
+        let size = |button: Button| {
+            button
+                .flex_1()
+                .min_w_0()
+                .h(px(36.))
+                .px_3()
+                .text_size(px(13.))
+        };
+        div()
+            .w_full()
+            .flex()
+            .items_center()
+            .gap_2()
+            .flex_shrink_0()
+            .child(size(self.primary.primary()))
+            .child(size(self.secondary.with_variant(ButtonVariant::Secondary)))
+    }
+}
 
 pub fn caption(text: impl Into<SharedString>, cx: &App) -> Div {
     div()
@@ -16,12 +219,12 @@ pub fn divider(cx: &App) -> Div {
         .flex_shrink_0()
         .bg(cx.theme().sidebar_border)
 }
+#[cfg(feature = "gallery")]
 pub fn binding_preview(text: String, cx: &App) -> Div {
     div()
         .w_full()
-        .px_3()
-        .py_2()
-        .rounded(px(5.))
+        .p_3()
+        .rounded(px(6.))
         .border_1()
         .border_color(cx.theme().border)
         .bg(cx.theme().background)
@@ -29,59 +232,14 @@ pub fn binding_preview(text: String, cx: &App) -> Div {
         .text_size(px(13.))
         .child(text)
 }
-pub fn binding_description(
-    binding: &Binding,
-    layers: &[keyforge_core::Layer],
-    document: Option<&keyforge_core::zmk::Document>,
-) -> String {
-    if matches!(binding, Binding::Custom(_))
-        && let Some(behaviors) = document.and_then(|doc| doc.hold_tap_behaviors().ok())
-        && keyforge_core::zmk::resolved_hold_tap(binding, &behaviors).is_some()
-    {
-        return crate::keycap::for_binding(binding, layers, &behaviors).description;
-    }
-    let layer_name = |id: keyforge_core::LayerId| {
-        layers
-            .get(id.0)
-            .map(|layer| layer.name.clone())
-            .unwrap_or_else(|| format!("layer {}", id.0))
-    };
-    match binding {
-        Binding::ModTap { hold, tap } => {
-            let modifier = match hold.0.as_str() {
-                "LSHFT" => "Left Shift",
-                "RSHFT" => "Right Shift",
-                "LCTRL" => "Left Control",
-                "RCTRL" => "Right Control",
-                "LALT" => "Left Alt",
-                "RALT" => "Right Alt",
-                "LGUI" => "Left GUI",
-                "RGUI" => "Right GUI",
-                other => other,
-            };
-            format!("Tap for {}. Hold for {modifier}.", tap.0)
-        }
-        Binding::LayerTap { layer, tap } => format!(
-            "Tap for {}. Hold to activate {}.",
-            tap.0,
-            layer_name(*layer)
-        ),
-        Binding::MomentaryLayer(layer) => format!("Activate {} while held.", layer_name(*layer)),
-        Binding::KeyPress(code) => format!("Send {} while held.", code.0),
-        _ => binding.behavior().description().into(),
-    }
-}
 pub fn key_preview(
     binding: &Binding,
     selected: bool,
     layers: &[keyforge_core::Layer],
-    document: Option<&keyforge_core::zmk::Document>,
+    behaviors: &std::collections::BTreeMap<String, [String; 2]>,
     cx: &App,
 ) -> Div {
-    let behaviors = document
-        .and_then(|doc| doc.hold_tap_behaviors().ok())
-        .unwrap_or_default();
-    let label = crate::keycap::for_binding(binding, layers, &behaviors);
+    let label = crate::keycap::for_binding(binding, layers, behaviors);
     let primary = if let Some(path) = label.primary.icon {
         svg().path(path).size(px(22.)).into_any_element()
     } else {
@@ -157,4 +315,30 @@ pub fn build_status(status: BuildStatus, cx: &App) -> Div {
         BuildStatus::Cancelled => ("Cancelled", cx.theme().muted_foreground),
     };
     div().text_size(px(12.)).text_color(color).child(text)
+}
+
+/// Application preferences use the same label/description/control composition.
+pub fn setting_row(title: &str, description: &str, control: impl IntoElement, cx: &App) -> Div {
+    div()
+        .w_full()
+        .flex()
+        .flex_col()
+        .gap_3()
+        .py_4()
+        .border_b_1()
+        .border_color(cx.theme().sidebar_border)
+        .flex_shrink_0()
+        .child(
+            div()
+                .text_size(px(14.))
+                .font_weight(FontWeight::SEMIBOLD)
+                .child(title.to_string()),
+        )
+        .child(
+            div()
+                .text_size(px(12.))
+                .text_color(cx.theme().muted_foreground)
+                .child(description.to_string()),
+        )
+        .child(control)
 }
