@@ -64,6 +64,22 @@ pub fn encode_project(project: &Project) -> Result<String> {
     project.check_structure()?;
     Ok(serde_json::to_string_pretty(project)?)
 }
+/// Explicit artifact export never overwrites an existing file.
+pub fn export_artifact(source: &Path, directory: &Path) -> Result<PathBuf> {
+    let directory = directory.canonicalize()?;
+    let name = source
+        .file_name()
+        .ok_or_else(|| Error::InvalidDocument("Artifact has no filename".into()))?;
+    let target = directory.join(name);
+    let mut input = fs::File::open(source)?;
+    let mut output = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&target)?;
+    std::io::copy(&mut input, &mut output)?;
+    output.sync_all()?;
+    Ok(target)
+}
 fn write_json(path: &Path, value: &impl serde::Serialize) -> Result<()> {
     let bytes = serde_json::to_vec_pretty(value)?;
     let parent = path

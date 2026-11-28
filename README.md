@@ -10,7 +10,9 @@ A desktop editor for [ZMK](https://zmk.dev/) keymaps, with local firmware builds
 ### Editing
 
 - Edit keys and layers on a keyboard layout.
-- Search ZMK keycodes or use custom behavior references.
+- Search ZMK behaviors and keycodes, including names and descriptions.
+- Edit separate hold/tap parameters and combine left/right modifiers.
+- Assign custom behaviors and macros from your configuration, or edit a binding expression directly.
 - Add and edit combos and macros.
 - Create hold-tap, tap-dance and mod-morph behaviors.
 - Edit conditional layers and existing encoder bindings.
@@ -22,7 +24,7 @@ A desktop editor for [ZMK](https://zmk.dev/) keymaps, with local firmware builds
 - Save a local copy of a GitHub configuration.
 - Build firmware with Docker or Podman.
 - View compiler output, errors and warnings in the app.
-- Save to GitHub and run an existing firmware workflow.
+- Save changes back to GitHub explicitly.
 - Reopen the last saved keymap when the app starts.
 
 ## Getting started
@@ -59,9 +61,11 @@ Choose **Connect GitHub**, select your configuration repository, branch and keym
 
 ### Edit your keymap
 
-Select a layer, click a key and choose its behavior. Click **Apply binding** to keep the change.
+Select a layer, click a key and choose its behavior. Expand an action to search its keycode or layer. Modifiers appear for the keycode being edited. Valid changes stage immediately and participate in undo/redo.
 
-Combos, macros, behaviors, conditional layers and encoders have their own editing screens. Click **Apply changes** in those screens before saving.
+Custom behaviors defined in the loaded keymap appear alongside the built-in behaviors. Expand **Binding expression** to inspect, copy or edit ZMK directly. Invalid drafts stay in the editor until corrected or explicitly discarded. Features such as mouse movement or lighting also need support enabled in your firmware configuration.
+
+Combos, macros, behaviors, conditional layers and encoders reuse the same contextual editing controls. Shared behavior definitions own their timing and child behaviors; each key assignment owns its arguments.
 
 ### Save your changes
 
@@ -69,15 +73,15 @@ Use **Save file** under **Open configuration** to save without building.
 
 For a configuration opened from GitHub, **Save copy…** creates a local copy. Use **Save to GitHub** if you want to write changes back to the repository.
 
+Set **Preferences → Local keymap save directory** to choose where local configuration copies are saved. Changing the directory takes effect on the next local save.
+
 ### Build firmware
 
 Install Docker or Podman and make sure your user can run it. Your configuration needs a `build.yaml` and either `config/west.yml` or a root `west.yml`.
 
 Click **Save and build**. If you opened the configuration from GitHub, Keyforge offers to make a local copy first. It also asks before downloading a missing build image.
 
-Compiler output appears in the bottom pane. Errors and warnings are listed under **Problems**. When the build finishes successfully, click **Open firmware folder** to find the files. Later builds reuse cached dependencies and build files.
-
-To build on GitHub instead, choose **Save and build on GitHub** under **Open configuration**. This uses your repository's existing workflow. The workflow needs `workflow_dispatch` support to run without a new commit.
+Compiler output appears under **Output**, with errors and warnings under **Problems**. Successful firmware appears under **Artifacts**, grouped by build and target, with export and folder controls. Previous successes remain distinguishable from the latest build. Later builds reuse cached dependencies and build files.
 
 ## Current limits
 

@@ -117,7 +117,7 @@ impl Keyforge {
                             &binding,
                             selected,
                             &self.core.project.keymap.layers,
-                            self.core.project.zmk.as_ref(),
+                            &self.hold_tap_behaviors,
                             cx,
                         )
                     }),

@@ -128,7 +128,8 @@ impl Binding {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BindingDraft {
     pub behavior: Behavior,
-    pub parameters: [String; 2],
+    pub parameters: Vec<String>,
+    pub reference: Option<String>,
 }
 impl From<&Binding> for BindingDraft {
     fn from(binding: &Binding) -> Self {
@@ -142,17 +143,32 @@ impl From<&Binding> for BindingDraft {
         };
         Self {
             behavior: binding.behavior(),
-            parameters,
+            parameters: parameters.to_vec(),
+            reference: None,
         }
     }
 }
 impl BindingDraft {
+    pub fn source(&self) -> String {
+        if let Some(reference) = &self.reference {
+            return std::iter::once(reference.clone())
+                .chain(self.parameters.clone())
+                .collect::<Vec<_>>()
+                .join(" ");
+        }
+        if self.behavior == Behavior::Custom {
+            self.parameters[0].clone()
+        } else {
+            self.preview()
+        }
+    }
     pub fn change_behavior(&mut self, behavior: Behavior) {
         let tap = self
             .binding()
             .ok()
             .map(|b| b.label())
             .unwrap_or_else(|| "F".into());
+        self.reference = None;
         self.behavior = behavior;
         self.parameters = match behavior {
             Behavior::KeyPress => [tap, String::new()],
@@ -161,9 +177,13 @@ impl BindingDraft {
             Behavior::MomentaryLayer => ["1".into(), String::new()],
             Behavior::Transparent | Behavior::None => Default::default(),
             Behavior::Custom => ["&kp F".into(), String::new()],
-        };
+        }
+        .to_vec();
     }
     pub fn binding(&self) -> Result<Binding> {
+        if self.reference.is_some() {
+            return crate::zmk::binding(&self.source());
+        }
         let first = self.parameters[0].trim().to_uppercase();
         let second = self.parameters[1].trim().to_uppercase();
         let layer = || {
@@ -297,12 +317,34 @@ pub fn supported_key_codes() -> Vec<String> {
                 .lines()
                 .map(str::to_string),
         )
+        .chain(
+            include_str!("../../assets/zmk/keycode-labels.tsv")
+                .lines()
+                .filter_map(|line| line.split_once('\t').map(|(code, _)| code.to_string())),
+        )
         .collect();
     codes.sort();
     codes.dedup();
     codes
 }
 pub fn valid_key_code(code: &str) -> bool {
+    if code.parse::<u32>().is_ok()
+        || code
+            .strip_prefix("0x")
+            .or_else(|| code.strip_prefix("0X"))
+            .is_some_and(|value| u32::from_str_radix(value, 16).is_ok())
+        || ((code.starts_with("ZMK_HID_USAGE(") || code.starts_with('('))
+            && crate::bindings::split(&format!("&kp {code}"))
+                .is_ok_and(|(_, args)| args.len() == 1))
+    {
+        return true;
+    }
+    if include_str!("../../assets/zmk/keycode-labels.tsv")
+        .lines()
+        .any(|line| line.split_once('\t').is_some_and(|(name, _)| name == code))
+    {
+        return true;
+    }
     if include_str!("../../assets/zmk/keycodes.txt")
         .lines()
         .any(|name| name == code)
@@ -396,6 +438,15 @@ pub struct FirmwareArtifact {
     pub name: String,
     pub bytes: u64,
     pub simulated: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArtifactSet {
+    pub build: u64,
+    pub configuration: String,
+    pub directory: Option<std::path::PathBuf>,
+    pub artifacts: Vec<FirmwareArtifact>,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BuildStatus {
@@ -415,6 +466,7 @@ impl BuildStatus {
 pub struct BuildProblem {
     pub severity: Severity,
     pub message: String,
+    pub target: Option<String>,
 }
 /// Classify diagnostic-bearing lines while retaining their original output text.
 pub fn build_line_severity(line: &str) -> Option<Severity> {
@@ -453,10 +505,12 @@ pub struct Build {
     pub output: Vec<String>,
     pub artifacts: Vec<FirmwareArtifact>,
     pub problems: Vec<BuildProblem>,
+    pub current_target: Option<String>,
 }
 impl Default for Build {
     fn default() -> Self {
         Self {
+            current_target: None,
             id: 0,
             status: BuildStatus::Idle,
             progress: 0,

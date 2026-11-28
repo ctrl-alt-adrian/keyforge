@@ -469,11 +469,21 @@ pub fn build(
         let mut artifacts = vec![];
         for entry in fs::read_dir(&output)? {
             let entry = entry?;
-            if entry.file_type()?.is_file() {
+            if entry.file_type()?.is_file()
+                && entry
+                    .path()
+                    .extension()
+                    .and_then(|extension| extension.to_str())
+                    .is_some_and(|extension| ["uf2", "bin", "hex"].contains(&extension))
+            {
                 artifacts.push(FirmwareArtifact {
                     name: entry.file_name().to_string_lossy().to_string(),
                     bytes: entry.metadata()?.len(),
                     simulated: false,
+                    target: entry
+                        .path()
+                        .file_stem()
+                        .map(|name| name.to_string_lossy().to_string()),
                 });
             }
         }

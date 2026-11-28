@@ -58,11 +58,13 @@ pub fn build_step(operation: u64, step: usize, fail: bool) -> BuildEvent {
                 name: "corne_left-simulated.uf2".into(),
                 bytes: 245760,
                 simulated: true,
+                target: Some("Simulated target".into()),
             },
             FirmwareArtifact {
                 name: "corne_right-simulated.uf2".into(),
                 bytes: 241664,
                 simulated: true,
+                target: Some("Simulated target".into()),
             },
         ]
     } else {

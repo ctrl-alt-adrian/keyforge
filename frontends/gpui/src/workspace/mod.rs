@@ -85,7 +85,7 @@ impl Keyforge {
         } else if self.core.destination == Destination::Repository {
             center = center.child(self.connection_screen(cx));
         } else if let Some(section) = keyforge_core::live::section(self.core.destination) {
-            center = center.child(self.definitions_screen(section, cx));
+            center = center.child(self.definitions_screen(section, compact, cx));
         } else {
             center = center.child(self.connection_screen(cx));
         }
@@ -238,104 +238,81 @@ impl Keyforge {
     }
     fn preferences(&self, cx: &mut Context<Self>) -> Stateful<Div> {
         use keyforge_core::workspace::Appearance;
-        div()
-            .id("preferences")
-            .flex_1()
-            .min_h_0()
-            .overflow_y_scroll()
-            .p_8()
-            .flex()
-            .flex_col()
-            .gap_6()
-            .child(
-                div()
-                    .text_size(px(26.))
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .child("Preferences"),
+        let appearance = div().flex().flex_wrap().gap_2().children(
+            [
+                (Appearance::System, "System"),
+                (Appearance::Light, "Light"),
+                (Appearance::Dark, "Dark"),
+            ]
+            .map(|(mode, label)| {
+                self.button(
+                    format!("theme-{label}"),
+                    label,
+                    Command::SetAppearance(mode),
+                    cx,
+                )
+                .selected(self.core.workspace.preferences.appearance == mode)
+            }),
+        );
+        let motion = self
+            .button(
+                "reduced-motion",
+                if self.core.workspace.preferences.reduced_motion {
+                    "On"
+                } else {
+                    "Off"
+                },
+                Command::SetReducedMotion(!self.core.workspace.preferences.reduced_motion),
+                cx,
             )
-            .child(
-                div()
-                    .text_color(cx.theme().muted_foreground)
-                    .child("Personalize the editor. Your keyboard configuration stays intact."),
-            )
-            .child(divider(cx))
-            .child(
-                div()
-                    .text_size(px(19.))
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .child("Appearance"),
-            )
-            .child(caption("Theme", cx))
-            .child(
-                div().flex().flex_wrap().gap_2().children(
-                    [
-                        (Appearance::System, "System"),
-                        (Appearance::Light, "Light"),
-                        (Appearance::Dark, "Dark"),
-                    ]
-                    .map(|(mode, label)| {
-                        self.button(
-                            format!("theme-{label}"),
-                            label,
-                            Command::SetAppearance(mode),
-                            cx,
-                        )
-                        .selected(self.core.workspace.preferences.appearance == mode)
-                    }),
+            .with_variant(gpui_component::button::ButtonVariant::Secondary)
+            .selected(self.core.workspace.preferences.reduced_motion)
+            .w(px(100.));
+        let folder = self
+            .core
+            .workspace
+            .preferences
+            .local_keymap_directory
+            .as_ref();
+        let choose = Button::new("local-keymap-directory")
+            .w(px(180.))
+            .h(px(36.))
+            .label("Choose folder…")
+            .icon(IconName::FolderOpen)
+            .on_click(cx.listener(|this, _, window, cx| {
+                this.browse_path(
+                    crate::editor_controls::PathAction::LocalKeymapDirectory,
+                    window,
+                    cx,
+                )
+            }));
+        let mut location = div().flex().flex_col().gap_3().child(
+            div().text_size(px(13.)).child(
+                folder
+                    .map(|p| p.display().to_string())
+                    .unwrap_or_else(|| "Use the opened keymap's location".into()),
+            ),
+        );
+        if folder.is_some() {
+            location = location.child(ActionRow::new(
+                choose,
+                self.button(
+                    "use-source-location",
+                    "Use source location",
+                    Command::SetLocalKeymapDirectory(None),
+                    cx,
                 ),
-            )
-            .child(
-                self.button(
-                    "reduced-motion",
-                    if self.core.workspace.preferences.reduced_motion {
-                        "Reduced motion: On"
-                    } else {
-                        "Reduced motion: Off"
-                    },
-                    Command::SetReducedMotion(!self.core.workspace.preferences.reduced_motion),
-                    cx,
-                )
-                .w(px(220.))
-                .justify_start()
-                .with_variant(gpui_component::button::ButtonVariant::Secondary)
-                .selected(self.core.workspace.preferences.reduced_motion),
-            )
-            .child(
-                div()
-                    .text_size(px(12.))
-                    .text_color(cx.theme().muted_foreground)
-                    .child("Reduced motion disables Keyforge's pane and selection transitions."),
-            )
-            .child(divider(cx))
+            ));
+        } else {
+            location = location.child(choose);
+        }
+        div().id("preferences").flex_1().min_w_0().min_h_0().overflow_y_scroll().p_6().flex().flex_col().gap_3()
+            .child(div().text_size(px(26.)).font_weight(FontWeight::SEMIBOLD).child("Preferences"))
+            .child(div().text_color(cx.theme().muted_foreground).child("Device-local settings. These do not modify your keymap."))
+            .child(setting_row("Theme", "Match the system or choose a fixed appearance.", appearance, cx))
+            .child(setting_row("Reduced motion", "Disable pane and selection transitions.", motion, cx))
+            .child(setting_row("Local keymap save directory", "Changing this folder creates a configuration copy on your next local save; the original stays intact.", location, cx))
             .child(self.build_setup_panel(cx))
-            .child(divider(cx))
-            .child(caption("WORKSPACE", cx))
-            .child(
-                self.button(
-                    "reset-layout",
-                    "Reset pane layout",
-                    Command::ResetWorkspaceLayout,
-                    cx,
-                )
-                .w(px(220.))
-                .justify_start()
-                .with_variant(gpui_component::button::ButtonVariant::Secondary),
-            )
-            .child(
-                self.button(
-                    "preferences-back",
-                    "Return to keymap",
-                    Command::Navigate(Destination::Keymap),
-                    cx,
-                )
-                .w(px(220.))
-                .justify_start(),
-            )
-            .child(
-                div()
-                    .text_size(px(12.))
-                    .text_color(cx.theme().muted_foreground)
-                    .child("Preferences are saved on this device."),
-            )
+            .child(div().mt_4().text_size(px(12.)).text_color(cx.theme().muted_foreground).child("Preferences save automatically on this device."))
     }
 }

@@ -75,7 +75,20 @@ pub fn for_binding(
 fn simple(binding: &Binding, layers: &[Layer]) -> KeycapLabel {
     let blank = || Legend::text("");
     match binding {
-        Binding::KeyPress(code) => label(keycode(&code.0), blank()),
+        Binding::KeyPress(code) => {
+            let (base, modifiers) = keyforge_core::bindings::modifiers(&code.0);
+            let modifier_labels = modifiers
+                .iter()
+                .filter_map(|function| {
+                    keyforge_core::bindings::MODIFIER_FUNCTIONS
+                        .iter()
+                        .find(|(name, _)| *name == function)
+                        .map(|(_, label)| *label)
+                })
+                .collect::<Vec<_>>()
+                .join("+");
+            label(keycode(&base), Legend::text(modifier_labels))
+        }
         Binding::MomentaryLayer(layer) => {
             let name = layers
                 .get(layer.0)
@@ -142,7 +155,7 @@ fn modifier(code: &str) -> Option<String> {
             "RCTRL" | "RIGHT_CONTROL" => "R Ctrl",
             "LALT" | "LEFT_ALT" => "L Alt",
             "RALT" | "RIGHT_ALT" => "R Alt",
-            "LGUI" | "LEFT_WIN" => {
+            "LGUI" | "LEFT_GUI" | "LEFT_WIN" => {
                 if cfg!(target_os = "macos") {
                     "L Cmd"
                 } else if cfg!(target_os = "windows") {
@@ -151,7 +164,7 @@ fn modifier(code: &str) -> Option<String> {
                     "L Super"
                 }
             }
-            "RGUI" | "RIGHT_WIN" => {
+            "RGUI" | "RIGHT_GUI" | "RIGHT_WIN" => {
                 if cfg!(target_os = "macos") {
                     "R Cmd"
                 } else if cfg!(target_os = "windows") {
@@ -175,7 +188,9 @@ fn keycode(code: &str) -> Legend {
         "LSHFT" | "RSHFT" | "LEFT_SHIFT" | "RIGHT_SHIFT" => {
             Some(("keycaps/arrow-big-up.svg", "Shift"))
         }
-        "LGUI" | "RGUI" | "LEFT_WIN" | "RIGHT_WIN" => Some(("keycaps/command.svg", "GUI modifier")),
+        "LGUI" | "RGUI" | "LEFT_GUI" | "RIGHT_GUI" | "LEFT_WIN" | "RIGHT_WIN" => {
+            Some(("keycaps/command.svg", "GUI modifier"))
+        }
         "LEFT" => Some(("icons/arrow-left.svg", "Left")),
         "RIGHT" => Some(("icons/arrow-right.svg", "Right")),
         "UP" => Some(("icons/arrow-up.svg", "Up")),

@@ -24,17 +24,7 @@ pub fn section(destination: Destination) -> Option<Section> {
 impl Application {
     pub fn initialize_live_ui(&mut self) {
         if let Some(doc) = &self.project.zmk {
-            self.build.output = vec![match &doc.origin {
-                Origin::GitHub {
-                    repository, branch, ..
-                } => format!(
-                    "Connected source: {repository} · {branch}. Save a local configuration copy to build on this machine. GitHub save/build remains available under Open configuration."
-                ),
-                Origin::Local { path, .. } => format!(
-                    "Local keymap: {}. Save and build writes this file and builds locally with Docker or Podman. Save file writes without building.",
-                    path.display()
-                ),
-            }];
+            self.build.output.clear();
             if let Origin::GitHub {
                 repository,
                 branch,
@@ -52,10 +42,57 @@ impl Application {
         } else {
             self.destination = Destination::Repository;
             self.diagnostics.clear();
-            self.build.output =
-                vec!["Open a GitHub configuration or a local keymap to begin.".into()];
+            self.build.output.clear();
             self.status = "No configuration open".into();
         }
+    }
+    fn stage_layer_name(&mut self, finish: bool) -> Result<()> {
+        let draft = self
+            .layer_name_draft
+            .as_ref()
+            .ok_or(Error::InvalidSelection)?;
+        let name = draft.name.trim();
+        if name.is_empty() || name.chars().any(char::is_control) {
+            return Err(Error::InvalidDocument(
+                "Enter a nonempty layer name without control characters".into(),
+            ));
+        }
+        let current = self
+            .project
+            .keymap
+            .layers
+            .get(draft.layer.0)
+            .ok_or(Error::InvalidSelection)?;
+        if current.name == name {
+            if finish {
+                self.layer_name_draft = None;
+            }
+            return Ok(());
+        }
+        if self
+            .project
+            .keymap
+            .layers
+            .iter()
+            .enumerate()
+            .any(|(i, l)| i != draft.layer.0 && l.name.eq_ignore_ascii_case(name))
+        {
+            return Err(Error::InvalidDocument(
+                "Another layer already uses that name".into(),
+            ));
+        }
+        let mut doc = self.project.zmk.clone().ok_or(Error::InvalidSelection)?;
+        doc.rename_layer(draft.layer.0, name)?;
+        let before = self.project.clone();
+        self.project.keymap.layers = doc.layers()?;
+        self.project.zmk = Some(doc);
+        self.record_edit(before);
+        if finish {
+            self.layer_name_draft = None;
+        }
+        self.validate();
+        self.status = "Layer renamed. Save to update the configuration.".into();
+        Ok(())
     }
     fn begin_repository(&mut self, request: Request, message: &str) -> Result<()> {
         if self.connection.busy {
@@ -72,7 +109,7 @@ impl Application {
     }
     fn can_open_source(&self) -> Result<()> {
         if self.has_changes() || self.has_unapplied_draft() {
-            return Err(Error::InvalidDocument("Apply and save your edits, or explicitly discard them, before opening another keymap.".into()));
+            return Err(Error::InvalidDocument("Save your staged changes or explicitly discard pending edits before opening another keymap.".into()));
         }
         if self.build.status.active() {
             return Err(Error::InvalidDocument(
@@ -82,13 +119,15 @@ impl Application {
         Ok(())
     }
     pub fn has_unapplied_draft(&self) -> bool {
-        self.layer_name_draft.as_ref().is_some_and(|d| {
-            self.project
-                .keymap
-                .layers
-                .get(d.layer.0)
-                .is_some_and(|layer| d.name.trim() != layer.name)
-        }) || self.editor.as_ref().is_some_and(|d| d.dirty())
+        self.nested_draft_invalid()
+            || self.layer_name_draft.as_ref().is_some_and(|d| {
+                self.project
+                    .keymap
+                    .layers
+                    .get(d.layer.0)
+                    .is_some_and(|layer| d.name.trim() != layer.name)
+            })
+            || self.editor.as_ref().is_some_and(|d| d.dirty())
             || self
                 .draft
                 .as_ref()
@@ -96,7 +135,65 @@ impl Application {
                 .is_some_and(|(d, b)| d.binding().as_ref().ok() != Some(b))
     }
     pub(crate) fn dispatch_live(&mut self, command: &Command) -> Result<bool> {
+        let stage_definition = matches!(
+            command,
+            Command::SetMacroExpression { .. }
+                | Command::SetEditorField { .. }
+                | Command::ToggleComboPosition(_)
+                | Command::AddMacroStep
+                | Command::InsertMacroStep(_)
+                | Command::RemoveMacroStep(_)
+                | Command::MoveMacroStep { .. }
+        );
+        if self.nested_draft_invalid()
+            && matches!(
+                command,
+                Command::SelectEditor(_)
+                    | Command::NewDefinition
+                    | Command::SetEditorField { .. }
+                    | Command::AddMacroStep
+                    | Command::InsertMacroStep(_)
+                    | Command::RemoveMacroStep(_)
+                    | Command::MoveMacroStep { .. }
+                    | Command::SetMacroExpression { .. }
+            )
+        {
+            return Err(Error::InvalidDocument(
+                "Finish or discard the invalid action before changing this definition".into(),
+            ));
+        }
         match command {
+            Command::ExportArtifact {
+                build,
+                name,
+                directory,
+            } => {
+                let artifacts = self
+                    .artifact_history
+                    .iter()
+                    .find(|set| set.build == *build)
+                    .ok_or(Error::InvalidSelection)?;
+                if !artifacts
+                    .artifacts
+                    .iter()
+                    .any(|artifact| artifact.name == *name && !artifact.simulated)
+                    || std::path::Path::new(name).components().count() != 1
+                {
+                    return Err(Error::InvalidSelection);
+                }
+                let source = artifacts
+                    .directory
+                    .as_ref()
+                    .ok_or(Error::InvalidSelection)?
+                    .join(name);
+                self.begin_repository(
+                    Request::ExportArtifact {
+                        source,
+                        directory: directory.clone(),
+                    },
+                    "Exporting firmware…",
+                )?;
+            }
             Command::CheckBuildEnvironment => {
                 if !self.build_environment.busy() {
                     self.environment_generation += 1;
@@ -177,51 +274,14 @@ impl Application {
                     .ok_or(Error::InvalidSelection)?;
                 draft.name = name.clone();
                 draft.error = None;
+                if let Err(error) = self.stage_layer_name(false)
+                    && let Some(draft) = &mut self.layer_name_draft
+                {
+                    draft.error = Some(error.to_string());
+                }
             }
             Command::CancelLayerRename => self.layer_name_draft = None,
-            Command::ApplyLayerRename => {
-                let draft = self
-                    .layer_name_draft
-                    .as_ref()
-                    .ok_or(Error::InvalidSelection)?;
-                let name = draft.name.trim();
-                if name.is_empty() || name.chars().any(char::is_control) {
-                    return Err(Error::InvalidDocument(
-                        "Enter a nonempty layer name without control characters".into(),
-                    ));
-                }
-                let current = self
-                    .project
-                    .keymap
-                    .layers
-                    .get(draft.layer.0)
-                    .ok_or(Error::InvalidSelection)?;
-                if current.name == name {
-                    self.layer_name_draft = None;
-                    return Ok(true);
-                }
-                if self
-                    .project
-                    .keymap
-                    .layers
-                    .iter()
-                    .enumerate()
-                    .any(|(i, l)| i != draft.layer.0 && l.name.eq_ignore_ascii_case(name))
-                {
-                    return Err(Error::InvalidDocument(
-                        "Another layer already uses that name".into(),
-                    ));
-                }
-                let mut doc = self.project.zmk.clone().ok_or(Error::InvalidSelection)?;
-                doc.rename_layer(draft.layer.0, name)?;
-                let before = self.project.clone();
-                self.project.keymap.layers = doc.layers()?;
-                self.project.zmk = Some(doc);
-                self.record_edit(before);
-                self.layer_name_draft = None;
-                self.validate();
-                self.status = "Layer renamed. Save to update the configuration.".into();
-            }
+            Command::ApplyLayerRename => self.stage_layer_name(true)?,
             Command::ConnectGitHub => {
                 self.begin_repository(Request::Account, "Checking your GitHub CLI account…")?
             }
@@ -328,7 +388,7 @@ impl Application {
             Command::SaveLocalCopy { directory, build } => {
                 if self.has_unapplied_draft() {
                     return Err(Error::InvalidDocument(
-                        "Apply or revert the current draft before saving a local copy".into(),
+                        "Complete or discard the invalid draft before saving a local copy".into(),
                     ));
                 }
                 if self.build.status.active() {
@@ -359,6 +419,7 @@ impl Application {
                 self.save_source_with_target(Some(BuildTarget::GitHub))?;
             }
             Command::DiscardChanges => {
+                self.nested_draft = None;
                 self.resume_local_build = false;
                 let saved = self.saved_project.clone();
                 self.restore_project(saved);
@@ -372,7 +433,7 @@ impl Application {
                 if let Some(section) = section(self.destination) {
                     if self.editor.as_ref().is_some_and(|d| d.dirty()) {
                         return Err(Error::InvalidDocument(
-                            "Apply or revert the current definition draft first".into(),
+                            "Complete or discard the invalid definition draft first".into(),
                         ));
                     }
                     self.editor = Some(editor::draft(
@@ -392,7 +453,7 @@ impl Application {
                 }
                 if self.editor.as_ref().is_some_and(|d| d.dirty()) {
                     return Err(Error::InvalidDocument(
-                        "Apply or revert the current definition draft first".into(),
+                        "Complete or discard the invalid definition draft first".into(),
                     ));
                 }
                 self.editor = Some(editor::draft(
@@ -427,6 +488,28 @@ impl Application {
                     .ok_or(Error::InvalidSelection)?
                     .toggle_position(*position);
             }
+            Command::InsertMacroStep(index) => {
+                let draft = self.editor.as_mut().ok_or(Error::InvalidSelection)?;
+                draft.add_step();
+                let mut last = draft
+                    .fields
+                    .iter()
+                    .filter(|f| f.id.starts_with("step-mode-"))
+                    .count()
+                    - 1;
+                if *index > last {
+                    return Err(Error::InvalidSelection);
+                }
+                while last > *index {
+                    draft.move_step(last, -1)?;
+                    last -= 1;
+                }
+            }
+            Command::SetMacroExpression { index, source } => {
+                let draft = self.editor.as_mut().ok_or(Error::InvalidSelection)?;
+                draft.set(&format!("step-mode-{index}"), "Raw".into())?;
+                draft.set(&format!("step-bindings-{index}"), source.clone())?;
+            }
             Command::AddMacroStep => self
                 .editor
                 .as_mut()
@@ -453,6 +536,7 @@ impl Application {
                 self.project.zmk = Some(doc);
                 self.record_edit(before);
                 self.validate();
+                self.reset_draft();
                 let selected = editor::entries(&self.project, draft.section, self.active_layer.0)
                     .ok()
                     .and_then(|entries| {
@@ -468,6 +552,7 @@ impl Application {
                 self.status = "Definition staged. Save to update the configuration.".into();
             }
             Command::RevertDefinition => {
+                self.nested_draft = None;
                 if self.editor.as_ref().is_some_and(|d| d.node.is_none()) {
                     self.editor = None;
                     self.open_editor_for_destination();
@@ -499,6 +584,9 @@ impl Application {
             }
             _ => return Ok(false),
         }
+        if stage_definition {
+            self.stage_definition();
+        }
         Ok(true)
     }
     pub(crate) fn refresh_editor(&mut self) {
@@ -528,12 +616,27 @@ impl Application {
             });
     }
     pub(crate) fn save_source(&mut self, build: bool) -> Result<()> {
+        if let Some(directory) = &self.workspace.preferences.local_keymap_directory
+            && self
+                .project
+                .zmk
+                .as_ref()
+                .is_some_and(|doc| match &doc.origin {
+                    Origin::Local { path, .. } => !path.starts_with(directory),
+                    Origin::GitHub { .. } => build,
+                })
+        {
+            return self.dispatch(Command::SaveLocalCopy {
+                directory: directory.clone(),
+                build,
+            });
+        }
         self.save_source_with_target(build.then_some(BuildTarget::Local))
     }
     fn save_source_with_target(&mut self, target: Option<BuildTarget>) -> Result<()> {
         if self.has_unapplied_draft() {
             return Err(Error::InvalidDocument(
-                "Apply your binding or definition draft before saving".into(),
+                "Complete or discard the invalid draft before saving".into(),
             ));
         }
         let github = self
@@ -601,6 +704,7 @@ impl Application {
             output: vec![],
             artifacts: vec![],
             problems: vec![],
+            current_target: None,
         };
         self.workflow_run = None;
         self.local_firmware = None;
@@ -649,6 +753,7 @@ impl Application {
             ],
             artifacts: vec![],
             problems: vec![],
+            current_target: None,
         };
         self.workflow_run = None;
         self.local_firmware = None;
@@ -843,6 +948,10 @@ impl Application {
                                 BuildTarget::GitHub => self.start_live_build(false)?,
                             }
                         }
+                    }
+                    Reply::Exported(path) => {
+                        self.status = format!("Firmware exported to {}", path.display());
+                        self.connection.message = self.status.clone();
                     }
                     Reply::Downloaded(path) => {
                         self.status =

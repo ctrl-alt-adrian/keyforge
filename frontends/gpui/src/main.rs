@@ -1,6 +1,8 @@
+mod action_editor;
 mod actions;
 mod app;
 mod assets;
+mod binding_controls;
 mod build_setup;
 mod components;
 mod editor_controls;
@@ -9,6 +11,7 @@ mod gallery;
 mod keyboard;
 mod keycap;
 mod motion;
+mod parameter_picker;
 mod theme;
 mod workspace;
 

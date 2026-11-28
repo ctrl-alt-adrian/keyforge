@@ -58,6 +58,10 @@ pub struct Run {
 }
 #[derive(Debug, Clone)]
 pub enum Request {
+    ExportArtifact {
+        source: PathBuf,
+        directory: PathBuf,
+    },
     BuildEnvironment {
         generation: u64,
         prepare: bool,
@@ -100,6 +104,7 @@ pub enum Request {
     },
 }
 pub enum Reply {
+    Exported(PathBuf),
     BuildEnvironment {
         generation: u64,
         state: crate::build_environment::State,
@@ -505,6 +510,9 @@ fn find_configurations(repo: &str) -> Result<Reply> {
 }
 fn perform(request: Request) -> Result<Reply> {
     match request {
+        Request::ExportArtifact { source, directory } => Ok(Reply::Exported(
+            crate::persistence::export_artifact(&source, &directory)?,
+        )),
         Request::FindConfigurations { repository } => find_configurations(&repository),
         Request::Account => {
             let user = api("user")?;
@@ -894,6 +902,7 @@ fn watch(
                         name: string(a, "name")?,
                         bytes: a["size_in_bytes"].as_u64().unwrap_or(0),
                         simulated: false,
+                        target: None,
                     });
                 }
             }

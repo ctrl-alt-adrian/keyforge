@@ -1,7 +1,9 @@
 //! Framework-independent Keyforge application, services and geometry.
 pub mod application;
+pub mod bindings;
 pub mod design;
 pub mod domain;
+pub mod editing;
 pub mod error;
 pub mod layout;
 pub mod persistence;

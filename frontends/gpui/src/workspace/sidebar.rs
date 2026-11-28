@@ -84,7 +84,7 @@ impl Keyforge {
                             self.icon_button(
                                 "apply-layer-name",
                                 IconName::Check,
-                                "Save layer name · Enter",
+                                "Finish layer name · Enter",
                                 Command::ApplyLayerRename,
                                 cx,
                             )
@@ -94,7 +94,7 @@ impl Keyforge {
                             self.icon_button(
                                 "cancel-layer-name",
                                 IconName::Close,
-                                "Cancel rename · Escape",
+                                "Close rename · Escape",
                                 Command::CancelLayerRename,
                                 cx,
                             )
@@ -124,35 +124,29 @@ impl Keyforge {
                         .items_center()
                         .gap_1()
                         .child(
-                            self.button(
-                                format!("layer-{index}"),
-                                format!("{index}    {}", layer.name),
-                                Command::SelectLayer(id),
-                                cx,
-                            )
-                            .flex_1()
-                            .min_w_0()
-                            .justify_start()
-                            .tooltip(layer.name.clone())
-                            .selected(
-                                self.core.active_layer == id
-                                    && self.core.destination == Destination::Keymap,
-                            )
-                            .on_click(cx.listener(
-                                move |this, _, window, cx| {
-                                    if !matches!(
-                                        this.core.destination,
-                                        Destination::Encoders | Destination::Combos
-                                    ) {
-                                        this.command(
-                                            Command::Navigate(Destination::Keymap),
-                                            window,
-                                            cx,
-                                        );
+                            Button::new(SharedString::from(format!("layer-{index}")))
+                                .ghost()
+                                .label(format!("{index}    {}", layer.name))
+                                .h(px(36.))
+                                .text_size(px(13.))
+                                .flex_1()
+                                .min_w_0()
+                                .justify_start()
+                                .tooltip(layer.name.clone())
+                                .selected(
+                                    self.core.active_layer == id
+                                        && self.core.destination == Destination::Keymap,
+                                )
+                                .on_click(cx.listener(move |this, _, window, cx| {
+                                    this.command(
+                                        Command::Navigate(Destination::Keymap),
+                                        window,
+                                        cx,
+                                    );
+                                    if this.core.destination == Destination::Keymap {
+                                        this.command(Command::SelectLayer(id), window, cx);
                                     }
-                                    this.command(Command::SelectLayer(id), window, cx);
-                                },
-                            )),
+                                })),
                         )
                         .child(
                             Button::new(("rename-layer", index))

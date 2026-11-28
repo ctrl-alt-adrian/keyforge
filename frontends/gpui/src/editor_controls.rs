@@ -2,17 +2,19 @@
 use crate::app::Keyforge;
 use gpui::*;
 use gpui_component::{
+    WindowExt,
     input::{InputEvent, InputState},
-    select::{SearchableVec, SelectEvent, SelectState},
+    select::{SearchableVec, SelectEvent},
 };
 use keyforge_core::{Command, editor::Kind};
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(crate) enum PathAction {
     Open,
     OpenFolder,
-    Download,
+    ExportArtifact { build: u64, name: String },
     SaveLocal { build: bool },
+    LocalKeymapDirectory,
 }
 
 impl Keyforge {
@@ -104,6 +106,55 @@ impl Keyforge {
         }
     }
     pub(crate) fn sync_live_controls(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        // Read-only projections refresh with the editing context, not with
+        // streamed build-output frames. The core remains the state owner.
+        let section = keyforge_core::live::section(self.core.destination);
+        self.definition_records = section
+            .and_then(|section| {
+                keyforge_core::editor::entries(
+                    &self.core.project,
+                    section,
+                    self.core.active_layer.0,
+                )
+                .ok()
+            })
+            .unwrap_or_default();
+        self.definition_kind.clear();
+        self.definition_summaries.clear();
+        if let Some(draft) = &self.core.editor
+            && section == Some(draft.section)
+        {
+            let document = self.core.project.zmk.as_ref();
+            self.definition_kind = draft
+                .node
+                .as_ref()
+                .and_then(|path| {
+                    let document = document?;
+                    let tree = document.tree().ok()?;
+                    tree.find(path)?
+                        .value(&document.source, "compatible")
+                        .map(keyforge_core::zmk::unquote)
+                })
+                .unwrap_or_else(|| draft.get("behavior-type").into());
+            let catalog = keyforge_core::bindings::macro_catalog(document);
+            let mut summaries = std::collections::BTreeMap::new();
+            for field in &draft.fields {
+                if field.id != "bindings" && !field.id.starts_with("step-bindings-") {
+                    continue;
+                }
+                summaries.insert(
+                    field.value.clone(),
+                    self.summarize_binding(&field.value, &catalog),
+                );
+                for span in keyforge_core::zmk::binding_spans(&field.value).unwrap_or_default() {
+                    let source = &field.value[span];
+                    summaries
+                        .entry(source.to_string())
+                        .or_insert_with(|| self.summarize_binding(source, &catalog));
+                }
+            }
+            self.definition_summaries = summaries;
+        }
         let name = self
             .core
             .layer_name_draft
@@ -157,41 +208,106 @@ impl Keyforge {
             .as_ref()
             .map(|draft| draft.fields.clone())
             .unwrap_or_default();
-        for field in fields {
-            if let Kind::Choice(choices) = field.kind {
+        for mut field in fields {
+            if self.definition_source
+                && let Some(index) = field
+                    .id
+                    .strip_prefix("step-bindings-")
+                    .and_then(|index| index.parse::<usize>().ok())
+                && self.expanded_step == Some(index)
+                && let Some(draft) = &self.core.editor
+            {
+                field.value = draft.sequence_group(index);
+            }
+            let choices = match &field.kind {
+                Kind::Choice(values) => Some(
+                    values
+                        .iter()
+                        .map(|value| crate::binding_controls::BindingChoice::new(value, ""))
+                        .collect::<Vec<_>>(),
+                ),
+                Kind::Layer | Kind::Layers => Some(
+                    self.core
+                        .project
+                        .keymap
+                        .layers
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| {
+                            field.kind != Kind::Layers
+                                || !field
+                                    .value
+                                    .split_whitespace()
+                                    .any(|value| value == i.to_string())
+                        })
+                        .map(|(i, layer)| {
+                            crate::binding_controls::BindingChoice::new(i.to_string(), &layer.name)
+                                .with_label(format!("{i} — {}", layer.name))
+                        })
+                        .collect(),
+                ),
+                _ => None,
+            };
+            if let Some(choices) = choices {
                 if !self.definition_choices.contains_key(&field.id) {
-                    let state = cx.new(|cx| {
-                        SelectState::new(SearchableVec::new(choices.clone()), None, window, cx)
-                            .searchable(true)
-                    });
+                    let state = crate::binding_controls::new_choices(window, cx);
                     let id = field.id.clone();
                     self._subscriptions.push(cx.subscribe_in(
                         &state,
                         window,
-                        move |this: &mut Self, _, event, window, cx| {
-                            if let SelectEvent::Confirm(Some(value)) = event
-                                && this
-                                    .core
-                                    .editor
-                                    .as_ref()
-                                    .is_some_and(|d| d.get(&id) != *value)
-                            {
-                                this.command(
-                                    Command::SetEditorField {
-                                        field: id.clone(),
-                                        value: value.clone(),
-                                    },
-                                    window,
-                                    cx,
-                                );
+                        move |_, _, event, window, cx| {
+                            if let SelectEvent::Confirm(Some(value)) = event {
+                                let value = value.clone();
+                                let id = id.clone();
+                                cx.defer_in(window, move |this, window, cx| {
+                                    if this
+                                        .core
+                                        .editor
+                                        .as_ref()
+                                        .and_then(|draft| {
+                                            draft.fields.iter().find(|field| field.id == id)
+                                        })
+                                        .is_some_and(|field| field.kind == Kind::Layers)
+                                    {
+                                        if let Ok(layer) = value.parse::<usize>() {
+                                            this.command(
+                                                Command::ToggleEditorLayer {
+                                                    field: id,
+                                                    layer: keyforge_core::LayerId(layer),
+                                                },
+                                                window,
+                                                cx,
+                                            );
+                                        }
+                                    } else if this
+                                        .core
+                                        .editor
+                                        .as_ref()
+                                        .is_some_and(|draft| draft.get(&id) != value)
+                                    {
+                                        this.command(
+                                            Command::SetEditorField { field: id, value },
+                                            window,
+                                            cx,
+                                        );
+                                    }
+                                });
                             }
                         },
                     ));
                     self.definition_choices.insert(field.id.clone(), state);
                 }
                 self.definition_choices[&field.id].update(cx, |state, cx| {
-                    state.set_items(SearchableVec::new(choices), window, cx);
-                    state.set_selected_value(&field.value, window, cx);
+                    state.set_items(
+                        crate::binding_controls::BindingOptions::new(choices),
+                        window,
+                        cx,
+                    );
+                    if field.kind == Kind::Layers {
+                        state.set_selected_index(None, window, cx);
+                    } else {
+                        state.set_selected_value(&field.value, window, cx);
+                    }
                 });
             } else {
                 if !self.definition_inputs.contains_key(&field.id) {
@@ -200,27 +316,34 @@ impl Keyforge {
                     self._subscriptions.push(cx.subscribe_in(
                         &state,
                         window,
-                        move |this: &mut Self, input, event, window, cx| {
+                        move |this, input, event, window, cx| {
                             if matches!(event, InputEvent::Change) {
                                 let value = input.read(cx).value().to_string();
-                                if this
-                                    .core
-                                    .editor
-                                    .as_ref()
-                                    .is_some_and(|d| d.get(&id) != value)
-                                {
-                                    this.command(
+                                let group = id
+                                    .strip_prefix("step-bindings-")
+                                    .and_then(|index| index.parse::<usize>().ok())
+                                    .filter(|index| {
+                                        this.definition_source && this.expanded_step == Some(*index)
+                                    });
+                                let current = this.core.editor.as_ref().map(|draft| {
+                                    group
+                                        .map(|index| draft.sequence_group(index))
+                                        .unwrap_or_else(|| draft.get(&id).to_string())
+                                });
+                                if current.is_some_and(|current| current != value) {
+                                    let command = if let Some(index) = group {
+                                        Command::SetMacroExpression {
+                                            index,
+                                            source: value,
+                                        }
+                                    } else {
                                         Command::SetEditorField {
                                             field: id.clone(),
                                             value,
-                                        },
-                                        window,
-                                        cx,
-                                    );
+                                        }
+                                    };
+                                    this.command(command, window, cx);
                                 }
-                            }
-                            if matches!(event, InputEvent::PressEnter { .. }) {
-                                this.command(Command::ApplyDefinition, window, cx);
                             }
                         },
                     ));
@@ -233,6 +356,7 @@ impl Keyforge {
             }
         }
     }
+
     pub(crate) fn browse_path(
         &mut self,
         action: PathAction,
@@ -245,12 +369,13 @@ impl Keyforge {
             multiple: false,
             prompt: Some(
                 match action {
-                    PathAction::Download => "Choose firmware download folder",
+                    PathAction::ExportArtifact { .. } => "Choose firmware export folder",
                     PathAction::SaveLocal { .. } => {
                         "Choose parent folder for a new local configuration copy"
                     }
                     PathAction::Open => "Open ZMK keymap file",
                     PathAction::OpenFolder => "Open ZMK configuration folder",
+                    PathAction::LocalKeymapDirectory => "Choose local keymap save folder",
                 }
                 .into(),
             ),
@@ -262,11 +387,20 @@ impl Keyforge {
                     if let Some(path) = paths.into_iter().next() {
                         this.command(
                             match action {
-                                PathAction::Download => Command::DownloadArtifacts(path),
+                                PathAction::ExportArtifact { build, name } => {
+                                    Command::ExportArtifact {
+                                        build,
+                                        name,
+                                        directory: path,
+                                    }
+                                }
                                 PathAction::SaveLocal { build } => Command::SaveLocalCopy {
                                     directory: path,
                                     build,
                                 },
+                                PathAction::LocalKeymapDirectory => {
+                                    Command::SetLocalKeymapDirectory(Some(path))
+                                }
                                 PathAction::Open | PathAction::OpenFolder => {
                                     Command::OpenLocal(path)
                                 }
@@ -293,6 +427,12 @@ impl Keyforge {
             .zmk
             .as_ref()
             .is_some_and(|d| matches!(d.origin, keyforge_core::zmk::Origin::GitHub { .. }))
+            && self
+                .core
+                .workspace
+                .preferences
+                .local_keymap_directory
+                .is_none()
         {
             self.browse_path(PathAction::SaveLocal { build: true }, window, cx);
         } else {
@@ -393,36 +533,78 @@ impl Keyforge {
         } else {
             "Keep editing to save your changes, or discard them and close Keyforge.".into()
         };
-        let response = window.prompt(
-            PromptLevel::Warning,
-            if storage_error.is_some() {
-                "Keymap could not be remembered"
-            } else {
-                "Discard unsaved changes?"
-            },
-            Some(&detail),
-            &[
-                "Keep editing",
-                if storage_error.is_some() {
-                    "Close anyway"
-                } else {
-                    "Discard and close"
-                },
-            ],
-            cx,
-        );
-        cx.spawn_in(window, async move |weak, cx| {
-            let answer = response.await;
-            let _ = weak.update_in(cx, |this, window, cx| {
+        let title = if storage_error.is_some() {
+            "Keymap could not be remembered"
+        } else {
+            "Discard unsaved changes?"
+        };
+        let confirm_label = if storage_error.is_some() {
+            "Close anyway"
+        } else {
+            "Discard and close"
+        };
+        let confirm_view = cx.entity().downgrade();
+        let close_view = confirm_view.clone();
+        let dismiss_prompt = move |window: &mut Window, cx: &mut App| {
+            let _ = close_view.update(cx, |this, cx| {
                 this.closing_prompt = false;
-                if matches!(answer, Ok(1)) {
-                    window.remove_window();
-                } else {
-                    cx.notify();
-                }
+                this.focus.focus(window);
+                cx.notify();
             });
-        })
-        .detach();
+        };
+        let cancel_focus = cx.focus_handle().tab_stop(false);
+        let dialog_focus = cancel_focus.clone();
+        window.open_dialog(cx, move |dialog, _, cx| {
+            let confirm_view = confirm_view.clone();
+            let dismiss_prompt = dismiss_prompt.clone();
+            let cancel_prompt = dismiss_prompt.clone();
+            let cancel_focus = cancel_focus.clone();
+            crate::components::confirmation(
+                dialog,
+                crate::components::Confirmation {
+                    title,
+                    detail: &detail,
+                    confirm: confirm_label,
+                    cancel: "Keep editing",
+                    destructive: true,
+                },
+                cx,
+            )
+            .footer(move |ok, cancel, window, cx| {
+                let cancel_focus = cancel_focus.clone();
+                let cancel_prompt = cancel_prompt.clone();
+                vec![
+                    div()
+                        .flex()
+                        .gap_2()
+                        .track_focus(&cancel_focus)
+                        .key_context("KeyforgeCloseConfirmation")
+                        .on_action(
+                            move |_: &crate::actions::CloseConfirmationEnter, window, cx| {
+                                // The dialog's Enter binding otherwise confirms even
+                                // when Keep editing is focused. Focused buttons retain
+                                // their native key-up click; initial Enter cancels.
+                                cx.stop_propagation();
+                                if cancel_focus.is_focused(window) {
+                                    cancel_prompt(window, cx);
+                                    window.close_dialog(cx);
+                                }
+                            },
+                        )
+                        .child(cancel(window, cx))
+                        .child(ok(window, cx)),
+                ]
+            })
+            .on_ok(move |_, window, cx| {
+                let _ = confirm_view.update(cx, |this, cx| {
+                    this.closing_prompt = false;
+                    cx.defer_in(window, |_, window, _| window.remove_window());
+                });
+                true
+            })
+            .on_close(move |_, window, cx| dismiss_prompt(window, cx))
+        });
+        dialog_focus.focus(window);
         false
     }
 }

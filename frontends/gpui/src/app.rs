@@ -2,10 +2,10 @@ use crate::motion::PaneMotion;
 use gpui::{prelude::*, *};
 use gpui_component::{
     ActiveTheme, WindowExt,
-    input::{InputEvent, InputState},
-    select::{SearchableVec, SelectEvent, SelectState},
+    input::InputState,
+    select::{SearchableVec, SelectState},
 };
-use keyforge_core::{Application as Core, Behavior, Command, KeyPosition, Pane, layout::Camera};
+use keyforge_core::{Application as Core, Command, KeyPosition, Pane, layout::Camera};
 use std::{cell::Cell, rc::Rc, time::Duration};
 
 pub type Choices = SelectState<SearchableVec<String>>;
@@ -17,16 +17,39 @@ pub struct Keyforge {
     pub hovered: Option<KeyPosition>,
     pub(crate) focus: FocusHandle,
     pub(crate) canvas_focus: FocusHandle,
-    pub(crate) inputs: [Entity<InputState>; 2],
-    pub(crate) behavior_select: Entity<Choices>,
-    pub(crate) parameter_selects: [Entity<Choices>; 2],
-    parameter_behavior: Option<Behavior>,
+    pub(crate) inputs: Vec<Entity<InputState>>,
+    pub(crate) behavior_select: Entity<crate::binding_controls::BindingChoices>,
+    pub(crate) parameter_picker:
+        Option<Entity<gpui_component::list::ListState<crate::parameter_picker::ParameterPicker>>>,
+    pub(crate) picker_context: Option<(keyforge_core::editing::BindingTarget, usize)>,
+    pub(crate) raw_binding_input: Entity<InputState>,
+    pub(crate) binding_catalog: Vec<keyforge_core::bindings::BehaviorSpec>,
+    pub(crate) binding_errors: Vec<String>,
+    pub(crate) binding_preview: Option<keyforge_core::bindings::DefinitionPreview>,
+    pub(crate) hold_tap_behaviors: std::collections::BTreeMap<String, [String; 2]>,
+    pub(crate) binding_catalog_source: Option<String>,
+    pub(crate) binding_keycodes: Vec<crate::binding_controls::BindingChoice>,
+    pub(crate) binding_advanced: bool,
+    pub(crate) binding_definition_preview: bool,
+    pub(crate) binding_target: keyforge_core::editing::BindingTarget,
+    pub(crate) binding_catalog_target: Option<keyforge_core::editing::BindingTarget>,
+    pub(crate) expanded_action: Option<usize>,
+    pub(crate) definition_advanced: bool,
+    pub(crate) definition_source: bool,
+    pub(crate) expanded_step: Option<usize>,
+    pub(crate) opening_local: bool,
+    pub(crate) opening_manual_repository: bool,
+    pub(crate) opening_current: bool,
     pub(crate) _subscriptions: Vec<Subscription>,
     pub(crate) repository_input: Entity<InputState>,
     pub(crate) layer_name_input: Entity<InputState>,
     pub(crate) repository_choices: [Entity<Choices>; 4],
     pub(crate) definition_inputs: std::collections::BTreeMap<String, Entity<InputState>>,
-    pub(crate) definition_choices: std::collections::BTreeMap<String, Entity<Choices>>,
+    pub(crate) definition_records: Vec<keyforge_core::editor::Entry>,
+    pub(crate) definition_kind: String,
+    pub(crate) definition_summaries: std::collections::BTreeMap<String, String>,
+    pub(crate) definition_choices:
+        std::collections::BTreeMap<String, Entity<crate::binding_controls::BindingChoices>>,
     controls_dirty: bool,
     pub(crate) closing_prompt: bool,
     pub(crate) closing_storage: bool,
@@ -43,93 +66,11 @@ pub struct Keyforge {
 }
 impl Keyforge {
     pub fn new(core: Core, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let inputs = [
-            cx.new(|cx| InputState::new(window, cx)),
-            cx.new(|cx| InputState::new(window, cx)),
-        ];
-        let behavior_select = cx.new(|cx| {
-            SelectState::new(
-                SearchableVec::new(
-                    Behavior::ALL
-                        .iter()
-                        .map(ToString::to_string)
-                        .collect::<Vec<_>>(),
-                ),
-                None,
-                window,
-                cx,
-            )
-            .searchable(true)
-        });
-        let parameter_selects = std::array::from_fn(|_| {
-            cx.new(|cx| {
-                SelectState::new(SearchableVec::new(Vec::<String>::new()), None, window, cx)
-                    .searchable(true)
-            })
-        });
-        let mut subscriptions = vec![cx.subscribe_in(
-            &behavior_select,
-            window,
-            |this: &mut Self, _, event, window, cx| {
-                if let SelectEvent::Confirm(Some(value)) = event
-                    && let Some(behavior) =
-                        Behavior::ALL.into_iter().find(|b| b.to_string() == *value)
-                    && this
-                        .core
-                        .draft
-                        .as_ref()
-                        .is_some_and(|d| d.behavior != behavior)
-                {
-                    this.command(Command::SetBehavior(behavior), window, cx);
-                }
-            },
-        )];
-        for (index, input) in inputs.iter().enumerate() {
-            subscriptions.push(cx.subscribe_in(
-                input,
-                window,
-                move |this: &mut Self, input, event, window, cx| {
-                    if matches!(event, InputEvent::Change) {
-                        let value = input.read(cx).value().to_string();
-                        if this
-                            .core
-                            .draft
-                            .as_ref()
-                            .is_some_and(|d| d.parameters[index] != value)
-                        {
-                            this.command(Command::SetParameter { index, value }, window, cx);
-                        }
-                    }
-                    if matches!(event, InputEvent::PressEnter { .. }) {
-                        this.command(Command::ApplyBinding, window, cx);
-                    }
-                },
-            ));
-        }
-        for (index, select) in parameter_selects.iter().enumerate() {
-            subscriptions.push(cx.subscribe_in(
-                select,
-                window,
-                move |this: &mut Self, _, event, window, cx| {
-                    if let SelectEvent::Confirm(Some(value)) = event
-                        && this
-                            .core
-                            .draft
-                            .as_ref()
-                            .is_some_and(|d| d.parameters[index] != *value)
-                    {
-                        this.command(
-                            Command::SetParameter {
-                                index,
-                                value: value.clone(),
-                            },
-                            window,
-                            cx,
-                        );
-                    }
-                },
-            ));
-        }
+        let inputs = Vec::new();
+        let behavior_select = crate::binding_controls::new_choices(window, cx);
+        let raw_binding_input =
+            cx.new(|cx| InputState::new(window, cx).placeholder("&behavior parameter…"));
+        let mut subscriptions = Vec::new();
         subscriptions.push(
             cx.observe_window_bounds(window, |this: &mut Self, window, cx| {
                 let size = window.viewport_size();
@@ -180,18 +121,44 @@ impl Keyforge {
             canvas_focus: cx.focus_handle().tab_stop(true),
             inputs,
             behavior_select,
-            parameter_selects,
-            parameter_behavior: None,
+            parameter_picker: None,
+            picker_context: None,
+            raw_binding_input,
+            binding_catalog: Vec::new(),
+            binding_errors: Vec::new(),
+            binding_preview: None,
+            hold_tap_behaviors: Default::default(),
+            binding_catalog_source: None,
+            binding_keycodes: keyforge_core::bindings::keycode_choices()
+                .into_iter()
+                .map(|(code, description)| {
+                    crate::binding_controls::BindingChoice::new(code, description)
+                })
+                .collect(),
+            binding_advanced: false,
+            binding_definition_preview: false,
+            binding_target: keyforge_core::editing::BindingTarget::Key,
+            binding_catalog_target: None,
+            expanded_action: None,
+            definition_advanced: false,
+            definition_source: false,
+            expanded_step: None,
+            opening_local: false,
+            opening_manual_repository: false,
+            opening_current: false,
             _subscriptions: subscriptions,
             repository_input,
             layer_name_input,
             repository_choices,
             definition_inputs: Default::default(),
+            definition_records: Vec::new(),
+            definition_kind: String::new(),
+            definition_summaries: Default::default(),
             definition_choices: Default::default(),
             controls_dirty: true,
             closing_prompt: false,
             closing_storage: false,
-            build_setup_prompted: false,
+            build_setup_prompted: true,
             polling: false,
             build_output_list: ListState::new(0, ListAlignment::Bottom, px(200.)),
             build_output_identity: (0, None),
@@ -206,6 +173,7 @@ impl Keyforge {
             #[cfg(feature = "gallery")]
             gallery: std::env::args().any(|arg| arg == "--gallery"),
         };
+        app.install_binding_controls(window, cx);
         app.install_live_controls(window, cx);
         app.sync_inputs(window, cx);
         app.sync_live_controls(window, cx);
@@ -230,6 +198,21 @@ impl Keyforge {
         if matches!(command, Command::CheckBuildEnvironment) {
             self.build_setup_prompted = false;
         }
+        let old_context = (
+            self.core.destination,
+            self.core.active_layer,
+            self.core.selected_key,
+            self.core.editor.as_ref().and_then(|d| d.node.clone()),
+        );
+        let changes_context = matches!(
+            &command,
+            Command::Navigate(_)
+                | Command::SelectKey(_)
+                | Command::SelectLayer(_)
+                | Command::SelectEditor(_)
+                | Command::NewDefinition
+                | Command::OpenDefinition(_)
+        );
         let old_selection = (self.core.active_layer, self.core.selected_key);
         let pane_transition = matches!(command, Command::TogglePane(_) | Command::ToggleFocusMode);
         let appearance_change = matches!(command, Command::SetAppearance(_));
@@ -245,6 +228,33 @@ impl Keyforge {
             return;
         }
         self.core.execute(command);
+        let new_context = (
+            self.core.destination,
+            self.core.active_layer,
+            self.core.selected_key,
+            self.core.editor.as_ref().and_then(|d| d.node.clone()),
+        );
+        if changes_context && old_context != new_context {
+            self.binding_target = match self.core.destination {
+                keyforge_core::Destination::Combos => {
+                    keyforge_core::editing::BindingTarget::Field {
+                        field: "bindings".into(),
+                        binding: 0,
+                    }
+                }
+                keyforge_core::Destination::Encoders => {
+                    keyforge_core::editing::BindingTarget::Sensor
+                }
+                _ => keyforge_core::editing::BindingTarget::Key,
+            };
+            self.expanded_action = None;
+            self.picker_context = None;
+            self.binding_advanced = false;
+            self.binding_definition_preview = false;
+            self.definition_advanced = false;
+            self.definition_source = false;
+            self.expanded_step = None;
+        }
         self.sync_build_output();
         if motion_change {
             for motion in &mut self.panes {
@@ -258,8 +268,16 @@ impl Keyforge {
             crate::theme::configure(self.core.workspace.preferences.appearance, Some(window), cx);
         }
         if pane_transition {
-            // Return focus from disappearing controls, keeping canvas navigation available.
-            self.canvas_focus.focus(window);
+            // Focus a mounted element when controls disappear. Definition and
+            // preferences screens have no canvas in the focus tree.
+            if matches!(
+                self.core.destination,
+                keyforge_core::Destination::Keymap | keyforge_core::Destination::Combos
+            ) {
+                self.canvas_focus.focus(window);
+            } else {
+                self.focus.focus(window);
+            }
         }
         self.sync_panes(window, pane_transition);
         self.sync_inputs(window, cx);
@@ -284,46 +302,6 @@ impl Keyforge {
                 size,
                 animate && !self.core.workspace.preferences.reduced_motion,
             );
-        }
-    }
-    fn sync_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(draft) = &self.core.draft {
-            let refresh_choices = self.parameter_behavior != Some(draft.behavior);
-            let value = draft.behavior.to_string();
-            if self.behavior_select.read(cx).selected_value() != Some(&value) {
-                self.behavior_select
-                    .update(cx, |s, cx| s.set_selected_value(&value, window, cx));
-            }
-            for index in 0..2 {
-                let value = draft.parameters[index].clone();
-                if self.inputs[index].read(cx).value().as_ref() != value {
-                    self.inputs[index]
-                        .update(cx, |input, cx| input.set_value(value.clone(), window, cx));
-                }
-                let mut choices = match (draft.behavior, index) {
-                    (Behavior::ModTap, 0) => keyforge_core::MODIFIERS
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect(),
-                    (Behavior::LayerTap | Behavior::MomentaryLayer, 0) => {
-                        (0..self.core.project.keymap.layers.len())
-                            .map(|n| n.to_string())
-                            .collect()
-                    }
-                    _ => keyforge_core::supported_key_codes(),
-                };
-                if !choices.contains(&value) {
-                    choices.push(value.clone());
-                }
-                let select = &self.parameter_selects[index];
-                if refresh_choices || select.read(cx).selected_value() != Some(&value) {
-                    select.update(cx, |state, cx| {
-                        state.set_items(SearchableVec::new(choices), window, cx);
-                        state.set_selected_value(&value, window, cx);
-                    });
-                }
-            }
-            self.parameter_behavior = Some(draft.behavior);
         }
     }
     fn schedule_poll(&mut self, window: &mut Window, cx: &mut Context<Self>) {

@@ -1,12 +1,7 @@
 use crate::{app::Keyforge, components::*};
 use gpui::{prelude::*, *};
-use gpui_component::{
-    ActiveTheme, Disableable, IconName,
-    button::{Button, ButtonVariants},
-    input::Input,
-    select::Select,
-};
-use keyforge_core::{Command, Destination, Pane, Severity};
+use gpui_component::{ActiveTheme, IconName};
+use keyforge_core::{Command, Destination, Pane};
 
 impl Keyforge {
     pub(crate) fn inspector(&self, width: f32, cx: &mut Context<Self>) -> Stateful<Div> {
@@ -48,15 +43,18 @@ impl Keyforge {
             return panel.child(self.definition_form(cx));
         }
         if self.core.destination != Destination::Keymap {
-            if let Some(draft) = &self.core.editor {
+            if let Some(draft) = &self.core.editor
+                && keyforge_core::live::section(self.core.destination) == Some(draft.section)
+            {
                 return panel
                     .child(caption(draft.section.title(), cx))
-                    .child(
-                        div()
-                            .mt_4()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .child(draft.get("name").to_string()),
-                    )
+                    .child(div().mt_4().font_weight(FontWeight::SEMIBOLD).child(
+                        if draft.get("name").is_empty() {
+                            draft.node.clone().unwrap_or_default()
+                        } else {
+                            draft.get("name").to_string()
+                        },
+                    ))
                     .child(
                         div()
                             .mt_4()
@@ -65,7 +63,7 @@ impl Keyforge {
                             .child(draft.section.description()),
                     )
                     .child(div().mt_4().text_size(px(12.)).child(if draft.dirty() {
-                        "Definition draft has unapplied changes"
+                        "Invalid draft retained in this editor"
                     } else {
                         "Edits are included in Save and build"
                     }));
@@ -87,11 +85,8 @@ impl Keyforge {
             );
         }
 
-        let (Some(key), Some(draft), Some(binding)) = (
-            self.core.selected_key,
-            &self.core.draft,
-            self.core.selected_binding(),
-        ) else {
+        let (Some(key), Some(binding)) = (self.core.selected_key, self.core.selected_binding())
+        else {
             return panel.child(
                 div()
                     .py_8()
@@ -100,9 +95,6 @@ impl Keyforge {
                     .child("Select a key on the canvas to inspect its binding."),
             );
         };
-        let draft_changed = draft.binding().as_ref().ok() != Some(binding);
-        let errors = self.core.draft_diagnostics();
-        let invalid = errors.iter().any(|d| d.severity == Severity::Error);
         panel = panel
             .child(
                 div()
@@ -114,7 +106,7 @@ impl Keyforge {
                         binding,
                         true,
                         &self.core.project.keymap.layers,
-                        self.core.project.zmk.as_ref(),
+                        &self.hold_tap_behaviors,
                         cx,
                     ))
                     .child(
@@ -125,7 +117,7 @@ impl Keyforge {
                             .child(
                                 div()
                                     .font_weight(FontWeight::SEMIBOLD)
-                                    .text_size(px(16.))
+                                    .text_size(px(17.))
                                     .child(format!("Position {}", key.0)),
                             )
                             .child(
@@ -141,99 +133,26 @@ impl Keyforge {
                     ),
             )
             .child(divider(cx))
-            .child(caption("Behavior", cx).mt_5().mb_3())
-            .child(
-                div().h(px(36.)).flex_shrink_0().child(
-                    Select::new(&self.behavior_select)
-                        .search_placeholder("Find a behavior…")
-                        .bg(cx.theme().secondary),
-                ),
-            );
-        for (index, label) in draft.behavior.parameter_labels().iter().enumerate() {
-            if draft.behavior == keyforge_core::Behavior::Custom {
-                panel = panel
-                    .child(caption(*label, cx).mt_5().mb_3())
-                    .child(Input::new(&self.inputs[index]));
-                continue;
-            }
-            panel = panel.child(caption(*label, cx).mt_5().mb_3()).child(
-                div().h(px(36.)).flex_shrink_0().child(
-                    Select::new(&self.parameter_selects[index])
-                        .search_placeholder(format!("Find {}…", label.to_lowercase()))
-                        .bg(cx.theme().secondary),
-                ),
-            );
-        }
-        panel = panel
-            .child(caption("Generated binding", cx).mt_7().mb_3())
-            .child(binding_preview(draft.preview(), cx))
+            .child(caption("Behavior", cx).mt_4().mb_2())
+            .child(self.shared_binding_editor(keyforge_core::editing::BindingTarget::Key, cx))
+            .child(div().flex_1().min_h(px(24.)))
             .child(
                 div()
-                    .mt_3()
-                    .text_size(px(13.))
-                    .text_color(cx.theme().muted_foreground)
-                    .child(
-                        draft
-                            .binding()
-                            .map(|binding| {
-                                binding_description(
-                                    &binding,
-                                    &self.core.project.keymap.layers,
-                                    self.core.project.zmk.as_ref(),
-                                )
-                            })
-                            .unwrap_or_else(|_| draft.behavior.description().into()),
-                    ),
-            );
-        for diagnostic in errors {
-            panel = panel.child(
-                div()
-                    .mt_3()
-                    .text_size(px(12.))
-                    .text_color(if diagnostic.severity == Severity::Error {
-                        cx.theme().danger_foreground
-                    } else {
-                        cx.theme().warning_foreground
-                    })
-                    .child(format!("{:?}: {}", diagnostic.severity, diagnostic.message)),
-            );
-        }
-        panel
-            .child(
-                div()
-                    .mt_5()
                     .text_size(px(12.))
                     .text_color(cx.theme().muted_foreground)
-                    .child(if draft_changed {
-                        "Draft changed. Apply to stage this edit."
+                    .child(if self.core.has_changes() {
+                        "Changes staged"
                     } else {
-                        "Edits are staged until Save and build."
+                        "Keymap workspace"
                     }),
             )
             .child(
-                self.button("apply-binding", "Apply binding", Command::ApplyBinding, cx)
-                    .disabled(invalid || !draft_changed)
-                    .mt_3(),
-            )
-            .child(
-                Button::new("copy-binding")
-                    .ghost()
-                    .label("Copy binding")
-                    .icon(IconName::Copy)
-                    .mt_2()
-                    .on_click(cx.listener(|this, _, _, cx| {
-                        if let Some(draft) = &this.core.draft {
-                            cx.write_to_clipboard(ClipboardItem::new_string(draft.preview()));
-                        }
-                    })),
-            )
-            .child(divider(cx).mt_4())
-            .child(caption("KEY HELP", cx).mt_4().mb_3())
-            .child(
                 div()
+                    .mt_1()
                     .text_size(px(12.))
                     .text_color(cx.theme().muted_foreground)
-                    .child(draft.behavior.description()),
-            )
+                    .child("Save and build to update firmware."),
+            );
+        panel
     }
 }
